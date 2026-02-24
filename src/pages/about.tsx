@@ -421,7 +421,7 @@ const About = () => {
                   >
                     CONTACT ME →
                   </button>
-                  <a href="/resume.pdf" download
+                  <a href="/payawal-kyle-resume.pdf" download="payawal-kyle-resume.pdf"
                     className="btn-o block text-center px-8 py-4 rounded-xl border border-gray-600 text-gray-400 text-xs font-bold tracking-[0.2em] uppercase no-underline">
                     DOWNLOAD RESUME
                   </a>

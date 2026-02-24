@@ -37,7 +37,7 @@ function useScrollReveal(containerRef: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    
+
     const items = container.querySelectorAll('.sr');
     const obs = new IntersectionObserver(
       (entries) => entries.forEach((e) => {
@@ -73,13 +73,13 @@ const Projects = () => {
     const handleResize = () => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
-    
+
     // Mount animation
     const t = setTimeout(() => setMounted(true), 40);
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(t);
@@ -88,37 +88,83 @@ const Projects = () => {
 
   useScrollReveal(containerRef);
 
-  // Calculate responsive dimensions
+  // ─── Responsive helpers — checks BOTH width AND height ───
+  // Height tiers:  <500  |  500–599  |  600–699  |  700–849  |  850+
+
   const getCardDimensions = () => {
-    if (windowSize.width < 640) return { width: 300, height: 300 };
-    if (windowSize.width < 1024) return { width: 420, height: 360 };
+    const { width: w, height: h } = windowSize;
+
+    if (w < 640) {
+      // Mobile: scale card height so it never exceeds 55% of viewport height
+      const mobileH = Math.min(300, Math.floor(h * 0.55));
+      return { width: 300, height: mobileH };
+    }
+
+    // Extremely short (DevTools fully open, very old small screens)
+    if (h < 500) {
+      if (w < 1024) return { width: 280, height: 200 };
+      return { width: 400, height: 240 };
+    }
+
+    if (h < 600) {
+      if (w < 1024) return { width: 300, height: 230 };
+      return { width: 460, height: 300 };
+    }
+
+    if (h < 700) {
+      if (w < 1024) return { width: 340, height: 270 };
+      return { width: 520, height: 360 };
+    }
+
+    if (h < 850) {
+      if (w < 1024) return { width: 380, height: 320 };
+      return { width: 620, height: 460 };
+    }
+
+    if (w < 1024) return { width: 420, height: 360 };
     return { width: 800, height: 600 };
   };
 
   const cardDims = getCardDimensions();
 
   const getMenuHeight = () => {
-    if (windowSize.width < 640) return 'h-[300px]';
-    if (windowSize.width < 1024) return 'h-[500px]';
+    const { width: w, height: h } = windowSize;
+    if (w < 640) return 'h-[260px]';
+    if (h < 500) return 'h-[200px]';
+    if (h < 600) return 'h-[240px]';
+    if (h < 700) return 'h-[300px]';
+    if (h < 850) return 'h-[420px]';
+    if (w < 1024) return 'h-[500px]';
     return 'h-[600px]';
   };
 
   const getCardTransform = () => {
-    if (windowSize.width < 640) return 'translate-x-0 translate-y-0'; // Mobile: no transform, positioned naturally
-    if (windowSize.width < 1024) return 'translate-x-[2%] translate-y-[-10%]';
+    const { width: w, height: h } = windowSize;
+    if (w < 640) return 'translate-x-0 translate-y-0';
+    if (w < 1024) return 'translate-x-[2%] translate-y-[0%]';
+    // Short screens: no upward lift, card stays flush to bottom-right
+    if (h < 600) return 'translate-x-[2%] translate-y-[0%]';
+    if (h < 700) return 'translate-x-[3%] translate-y-[0%]';
+    if (h < 850) return 'translate-x-[4%] translate-y-[-8%]';
     return 'translate-x-[5%] translate-y-[-15%]';
   };
 
   const getCardPosition = () => {
-    if (windowSize.width < 640) {
+    const { width: w } = windowSize;
+
+    // Mobile: center below title
+    if (w < 640) {
       return {
         position: 'absolute' as const,
-        top: '220px', // Below title which is at 80px + its height
+        top: '200px',
         left: '50%',
         transform: 'translateX(-50%)',
         bottom: 'auto'
       };
     }
+
+    // All non-mobile viewports — always anchor bottom-right.
+    // Card size + transform adjustments handle the visual fit per height tier.
     return {
       position: 'absolute' as const,
       bottom: 0,
@@ -129,16 +175,29 @@ const Projects = () => {
   };
 
   const getTitleSize = () => {
-    if (windowSize.width < 640) return 'text-2xl sm:text-3xl';
-    if (windowSize.width < 1024) return 'text-3xl';
+    const { width: w, height: h } = windowSize;
+    if (w < 640) return 'text-xl';
+    if (h < 500) return 'text-lg';
+    if (h < 600) return 'text-xl';
+    if (h < 700) return 'text-2xl';
+    if (w < 1024) return 'text-3xl';
     return 'text-4xl';
   };
 
   const getTitleTop = () => {
-    if (windowSize.width < 640) return '60px'; // Mobile: fixed at top, clear of navbar
-    if (windowSize.width < 1024) return '70px'; // Tablet: slightly lower
-    return 'calc(50vh - 420px)'; // Desktop: centered above menu
+    const { width: w, height: h } = windowSize;
+    if (w < 640) return '56px';
+    if (w < 1024) return '68px';
+    // Clamp so title never overlaps navbar on any short screen
+    if (h < 500) return '52px';
+    if (h < 600) return '56px';
+    if (h < 700) return '64px';
+    if (h < 850) return 'calc(50vh - 320px)';
+    return 'calc(50vh - 420px)';
   };
+
+  // Hide the subtitle hint text on very short screens to save space
+  const showSubtitle = windowSize.height >= 560;
 
   const isMobile = windowSize.width < 640;
 
@@ -202,19 +261,19 @@ const Projects = () => {
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
-      
+
       {/* ── Background ── */}
       <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
         {/* Base gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0f23] to-[#0a0a0a]"></div>
-        
+
         {/* Animated blobs */}
         <div className="absolute top-0 -left-4 w-96 h-96 bg-[#172995] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
         <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-700 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-700 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-        
+
         {/* Subtle noise overlay */}
-        <div 
+        <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulance type=\'fractalNoise\' baseFrequency=\'3\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
@@ -242,7 +301,8 @@ const Projects = () => {
         />
       </div>
 
-      <div 
+      {/* ── Title Block ── */}
+      <div
         className="absolute left-0 right-0 z-20 text-center"
         style={{ top: getTitleTop() }}
       >
@@ -253,10 +313,12 @@ const Projects = () => {
           <h2 className={cls(`p-fade-up text-[#FFFEEB] ${getTitleSize()} font-black tracking-tight leading-tight mt-1.5 sm:mt-2`)} style={dl(60)}>
             THE JOURNEY SO FAR
           </h2>
-          <p className={cls('p-fade-up text-gray-500 text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2 max-w-xs sm:max-w-md md:max-w-lg mx-auto leading-relaxed')} style={dl(100)}>
-            {isMobile ? 'Tap menu items below' : 'Hover over the menu items to explore my featured projects'}
-          </p>
-          <div className={cls('divline mx-auto mt-3 sm:mt-4 md:mt-5 h-px w-12 sm:w-14 md:w-16 bg-gradient-to-r from-transparent via-[#172995] to-transparent')} style={dl(140)} />
+          {showSubtitle && (
+            <p className={cls('p-fade-up text-gray-500 text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2 max-w-xs sm:max-w-md md:max-w-lg mx-auto leading-relaxed')} style={dl(100)}>
+              {isMobile ? 'Tap menu items below' : 'Hover over the menu items to explore my featured projects'}
+            </p>
+          )}
+          <div className={cls('divline mx-auto mt-2 sm:mt-3 md:mt-4 h-px w-12 sm:w-14 md:w-16 bg-gradient-to-r from-transparent via-[#172995] to-transparent')} style={dl(140)} />
         </div>
       </div>
 
@@ -284,7 +346,7 @@ const Projects = () => {
       </div>
 
       {/* ── Card Stack ── */}
-      <div 
+      <div
         className="transform z-10 px-4 sm:p-0"
         style={getCardPosition()}
       >
@@ -313,7 +375,7 @@ const Projects = () => {
                         {project.description}
                       </p>
                     </div>
-                    
+
                     {/* Browser Mockup Frame */}
                     <div className="w-full flex-1 min-h-0 rounded-lg sm:rounded-xl overflow-hidden border border-[#172995]/40 shadow-xl transition-all duration-300 hover:border-[#172995]/60 hover:shadow-2xl">
                       {/* Fake Browser Chrome */}
@@ -334,8 +396,8 @@ const Projects = () => {
                       </div>
                       {/* Screenshot */}
                       <div className="w-full h-full bg-[#0a0a0a] relative overflow-hidden">
-                        <img 
-                          src={project.image} 
+                        <img
+                          src={project.image}
                           alt={project.name}
                           className="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105"
                           loading="lazy"
@@ -348,10 +410,10 @@ const Projects = () => {
                 </Card>
               ))}
             </CardSwap>
-            </div>
           </div>
         </div>
-      
+      </div>
+
       {/* ── Footer ── */}
       <div className="absolute inset-x-0 bottom-0 z-30 px-3 sm:px-6 md:px-8 pb-1.5 sm:pb-2">
         <PortfolioFooter
