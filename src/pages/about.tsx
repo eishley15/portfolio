@@ -119,7 +119,7 @@ const SOCIALS = [
 ];
 
 /* ─── Scroll Reveal ─── */
-function useScrollReveal(ref) {
+function useScrollReveal(ref: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -127,19 +127,19 @@ function useScrollReveal(ref) {
     const obs = new IntersectionObserver(
       (entries) => entries.forEach((e) => {
         if (e.isIntersecting) {
-          setTimeout(() => e.target.classList.add('visible'), Number(e.target.dataset.delay || 0));
+          setTimeout(() => e.target.classList.add('visible'), Number((e.target as HTMLElement).dataset.delay || 0));
           obs.unobserve(e.target);
         }
       }),
       { root: el, threshold: 0.08 }
     );
-    items.forEach((i) => obs.observe(i));
+    items.forEach((i: Element) => obs.observe(i));
     return () => obs.disconnect();
   }, []);
 }
 
 /* ─── Section Heading — centered ─── */
-const SectionHead = ({ tag, title, sub }) => (
+const SectionHead = ({ tag, title, sub }: { tag: string; title: string; sub?: string }) => (
   <div className="text-center mb-12">
     <p className="sr text-[#172995] text-[10px] font-bold tracking-[0.3em] uppercase" data-delay="0">{tag}</p>
     <h2 className="sr text-[#FFFEEB] text-3xl sm:text-4xl font-black tracking-tight leading-tight mt-2" data-delay="60">{title}</h2>
@@ -156,7 +156,7 @@ const Rule = () => (
 /* ─── Main ─── */
 const About = () => {
   const navigate  = useNavigate();
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<keyof typeof SKILLS>('Technical');
   const [skillAnimKey, setSkillAnimKey] = useState(0);
   const activeSkills = SKILLS[tab] ?? [];

@@ -244,9 +244,9 @@ const stats = [
   { value: '3',  label: 'Roles Held'     },
 ];
 
-const dl = (ms) => ({ animationDelay: `${ms}ms` });
+const dl = (ms: number) => ({ animationDelay: `${ms}ms` });
 
-const SectionLabel = ({ children, mounted, delay }) => (
+const SectionLabel = ({ children, mounted, delay }: { children: React.ReactNode; mounted: boolean; delay: number }) => (
   <div
     className={`flex items-center gap-3 mb-5 ${mounted ? 'r-slide-l' : 'opacity-0'}`}
     style={dl(delay)}
@@ -260,13 +260,13 @@ const SectionLabel = ({ children, mounted, delay }) => (
   </div>
 );
 
-const Badge = ({ text }) => (
+const Badge = ({ text }: { text: string }) => (
   <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-[#172995]/15 border border-[#172995]/25 text-[#7b9fff] text-[10px] font-semibold tracking-widest uppercase">
     {text}
   </span>
 );
 
-const TimelineItem = ({ period, title, subtitle, meta, isLast, mounted, delay }) => (
+const TimelineItem = ({ period, title, subtitle, meta, isLast, mounted, delay }: { period: string; title: string; subtitle: string; meta?: string; isLast?: boolean; mounted: boolean; delay: number }) => (
   <div className={`flex gap-0 ${mounted ? 'r-fade-up' : 'opacity-0'}`} style={dl(delay)}>
     <div className="flex flex-col items-center mr-5 pt-1" style={{ width: '16px', minWidth: '16px' }}>
       <div
