@@ -303,7 +303,10 @@ const About = () => {
                 onClick={() => navigate('/contact')}
                 className="btn-o px-5 py-2.5 rounded-lg border border-gray-600 text-gray-400 text-[11px] font-bold tracking-[0.2em] uppercase bg-transparent cursor-pointer"
               >
-                LET'S WORK TOGETHER →
+                <span className="inline-flex items-center gap-2">
+                  LET'S WORK TOGETHER
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
               </button>
             </div>
           </section>
@@ -588,7 +591,10 @@ const About = () => {
                     onClick={() => navigate('/contact')}
                     className="btn-p px-8 py-4 rounded-xl bg-[#172995] text-[#FFFEEB] text-xs font-bold tracking-[0.2em] uppercase border-none cursor-pointer"
                   >
-                    CONTACT ME →
+                    <span className="inline-flex items-center gap-2">
+                      CONTACT ME
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </span>
                   </button>
                   <a href="/payawal-kyle-resume.pdf" download="payawal-kyle-resume.pdf"
                     className="btn-o block text-center px-8 py-4 rounded-xl border border-gray-600 text-gray-400 text-xs font-bold tracking-[0.2em] uppercase no-underline">

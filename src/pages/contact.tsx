@@ -246,7 +246,10 @@ const Contact = () => {
                   onClick={() => { setSubmitted(false); setFormData({ name:'', email:'', subject:'', message:'' }); }}
                   className="mt-4 px-6 py-2 border border-gray-600 text-gray-300 rounded-lg hover:border-[#172995] hover:text-[#172995] transition-colors text-sm font-semibold tracking-wider"
                 >
-                  SEND ANOTHER →
+                  <span className="inline-flex items-center gap-2">
+                    SEND ANOTHER
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </span>
                 </button>
               </div>
             ) : (
@@ -316,7 +319,10 @@ const Contact = () => {
                   <button type="submit" disabled={sending}
                     className="c-btn relative px-8 py-3 bg-[#172995] text-[#FFFEEB] rounded-lg text-sm font-semibold tracking-widest uppercase overflow-hidden transition-all duration-300 hover:bg-[#1f37b3] disabled:opacity-60">
                     <span className={`transition-opacity duration-200 ${sending ? 'opacity-0' : 'opacity-100'}`}>
-                      SEND MESSAGE →
+                      <span className="inline-flex items-center gap-2">
+                        SEND MESSAGE
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                      </span>
                     </span>
                     {sending && (
                       <span className="absolute inset-0 flex items-center justify-center">

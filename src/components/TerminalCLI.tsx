@@ -1,9 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Line {
   type: 'input' | 'output' | 'error' | 'ascii';
   text: string;
 }
+
+const ROUTES: Record<string, string> = {
+  home:     '/',
+  '~':      '/',
+  '/':      '/',
+  projects: '/projects',
+  about:    '/about',
+  contact:  '/contact',
+  resume:   '/resume',
+};
 
 const COMMANDS: Record<string, () => string[]> = {
   help: () => [
@@ -17,7 +28,19 @@ const COMMANDS: Record<string, () => string[]> = {
     '│  contact    — get in touch              │',
     '│  hire me    — make a good decision      │',
     '│  clear      — clear terminal            │',
+    '├─────────────────────────────────────────┤',
+    '│  ls         — list pages                │',
+    '│  cd <page>  — navigate to a page        │',
+    '│    e.g.  cd contact  /  cd projects     │',
     '└─────────────────────────────────────────┘',
+  ],
+
+  ls: () => [
+    'drwxr-xr-x  home',
+    'drwxr-xr-x  projects',
+    'drwxr-xr-x  about',
+    'drwxr-xr-x  contact',
+    'drwxr-xr-x  resume',
   ],
 
   about: () => [
@@ -97,6 +120,7 @@ const BOOT_LINES = [
 ];
 
 export default function TerminalCLI() {
+  const navigate = useNavigate();
   const [lines, setLines] = useState<Line[]>(
     BOOT_LINES.map((t) => ({ type: 'output', text: t }))
   );
@@ -105,6 +129,8 @@ export default function TerminalCLI() {
   const [histIdx, setHistIdx] = useState(-1);
   const [visible, setVisible] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -130,6 +156,37 @@ export default function TerminalCLI() {
       return;
     }
 
+    // Handle cd navigation
+    if (cmd.startsWith('cd')) {
+      const arg = cmd.slice(2).trim();
+
+      if (!arg) {
+        setLines((prev) => [
+          ...prev,
+          inputLine,
+          { type: 'error', text: 'Usage: cd <page>  (e.g. cd contact, cd projects)' },
+        ]);
+        return;
+      }
+
+      const route = ROUTES[arg];
+      if (route) {
+        setLines((prev) => [
+          ...prev,
+          inputLine,
+          { type: 'ascii', text: `Navigating to /${arg === '/' || arg === '~' ? '' : arg}...` },
+        ]);
+        setTimeout(() => navigate(route), 400);
+      } else {
+        setLines((prev) => [
+          ...prev,
+          inputLine,
+          { type: 'error', text: `cd: no such page: "${arg}". Run "ls" to see available pages.` },
+        ]);
+      }
+      return;
+    }
+
     const handler = COMMANDS[cmd];
     if (handler) {
       const output: Line[] = handler().map((t) => ({ type: 'ascii', text: t }));
@@ -141,7 +198,7 @@ export default function TerminalCLI() {
         { type: 'error', text: `Command not found: "${raw.trim()}". Type "help" for options.` },
       ]);
     }
-  }, []);
+  }, [navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -187,34 +244,63 @@ export default function TerminalCLI() {
       </button>
 
       <div
-        className="fixed bottom-[4.5rem] left-6 z-40 transition-all duration-300 origin-bottom-left"
-        style={{
+        className="fixed z-40 transition-all duration-300"
+        style={fullscreen ? {
+          inset: 0,
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'auto' : 'none',
+        } : {
+          bottom: '4.5rem',
+          left: '1.5rem',
           opacity: isOpen ? 1 : 0,
           transform: isOpen ? 'scaleY(1) translateY(0)' : 'scaleY(0.85) translateY(12px)',
+          transformOrigin: 'bottom left',
           pointerEvents: isOpen ? 'auto' : 'none',
         }}
       >
         <div
-          className="w-[420px] max-w-[calc(100vw-3rem)] rounded-xl overflow-hidden border border-[#172995]/50"
+          className="rounded-xl overflow-hidden border border-[#172995]/50 flex flex-col"
           style={{
             background: 'rgba(6,6,20,0.96)',
             backdropFilter: 'blur(16px)',
             boxShadow: '0 0 0 1px rgba(23,41,149,0.2), 0 24px 60px rgba(0,0,0,0.8)',
+            width: fullscreen ? '100%' : undefined,
+            height: fullscreen ? '100%' : undefined,
+            maxWidth: fullscreen ? undefined : 'calc(100vw - 3rem)',
+            minWidth: fullscreen ? undefined : '420px',
           }}
         >
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#172995]/25 bg-[#0a0a0a]/50">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-              <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-              <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+              <span
+                onClick={() => { setIsOpen(false); setMinimized(false); setFullscreen(false); }}
+                role="button"
+                aria-label="Close terminal"
+                style={{ width: 12, height: 12, borderRadius: '50%', background: '#ff5f57', display: 'inline-block', cursor: 'pointer', flexShrink: 0 }}
+              />
+              <span
+                onClick={() => setMinimized((m) => !m)}
+                role="button"
+                aria-label="Minimize terminal"
+                style={{ width: 12, height: 12, borderRadius: '50%', background: '#febc2e', display: 'inline-block', cursor: 'pointer', flexShrink: 0 }}
+              />
+              <span
+                onClick={() => { setFullscreen((f) => !f); setMinimized(false); }}
+                role="button"
+                aria-label="Toggle fullscreen"
+                style={{ width: 12, height: 12, borderRadius: '50%', background: '#28c840', display: 'inline-block', cursor: 'pointer', flexShrink: 0 }}
+              />
             </div>
             <p className="flex-1 text-center text-[10px] text-gray-500 font-mono tracking-widest uppercase select-none">
               kyle@portfolio ~ terminal
             </p>
           </div>
 
-          <div className="h-64 overflow-y-auto p-4 font-mono text-[11px] leading-relaxed space-y-0.5 scrollbar-thin"
-               style={{ scrollbarColor: 'rgba(23,41,149,0.4) transparent' }}>
+          {!minimized && (
+          <div
+            className="overflow-y-auto p-4 font-mono text-[11px] leading-relaxed space-y-0.5 scrollbar-thin"
+            style={{ height: fullscreen ? 'calc(100% - 7rem)' : '16rem', scrollbarColor: 'rgba(23,41,149,0.4) transparent' }}
+          >
             {lines.map((line, i) => (
               <p
                 key={i}
@@ -233,7 +319,9 @@ export default function TerminalCLI() {
             ))}
             <div ref={bottomRef} />
           </div>
+          )}
 
+          {!minimized && (
           <div className="flex items-center gap-2 px-4 py-3 border-t border-[#172995]/20">
             <span className="text-[#172995] font-mono text-xs select-none">{'>'}</span>
             <input
@@ -253,6 +341,7 @@ export default function TerminalCLI() {
               style={{ animation: 'blink 1s step-end infinite' }}
             />
           </div>
+          )}
         </div>
       </div>
 

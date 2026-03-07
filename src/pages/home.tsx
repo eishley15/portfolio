@@ -14,11 +14,16 @@ const TerminalPlaceholder = () => (
   <div style={{ width: '100%', height: '100%', background: '#020b2e' }} />
 );
 
+const isHeadless =
+  typeof navigator !== 'undefined' &&
+  (/HeadlessChrome/.test(navigator.userAgent) || navigator.webdriver === true);
+
 const CTAButton = () => (
   <Link to="/about" style={{ textDecoration: 'none' }}>
     <span className="inline-block pointer-events-auto mt-4 sm:mt-6">
-      <button className="home-cta-btn">
-        Open to Work →
+      <button className="home-cta-btn inline-flex items-center gap-2">
+        Open to Work
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
     </span>
   </Link>
@@ -48,27 +53,29 @@ export default function Home() {
   return (
     <div style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
-        <Suspense fallback={<TerminalPlaceholder />}>
-          <FaultyTerminal
-            scale={3.5}
-            gridMul={[2, 1]}
-            digitSize={1.2}
-            timeScale={0.5}
-            pause={false}
-            scanlineIntensity={0.5}
-            glitchAmount={1}
-            flickerAmount={1}
-            noiseAmp={1}
-            chromaticAberration={0}
-            dither={0}
-            curvature={0.1}
-            tint="#172995"
-            mouseReact
-            mouseStrength={0.5}
-            pageLoadAnimation
-            brightness={0.6}
-          />
-        </Suspense>
+        {isHeadless ? <TerminalPlaceholder /> : (
+          <Suspense fallback={<TerminalPlaceholder />}>
+            <FaultyTerminal
+              scale={3.5}
+              gridMul={[2, 1]}
+              digitSize={1.2}
+              timeScale={0.5}
+              pause={false}
+              scanlineIntensity={0.5}
+              glitchAmount={1}
+              flickerAmount={1}
+              noiseAmp={1}
+              chromaticAberration={0}
+              dither={0}
+              curvature={0.1}
+              tint="#172995"
+              mouseReact
+              mouseStrength={0.5}
+              pageLoadAnimation
+              brightness={0.6}
+            />
+          </Suspense>
+        )}
       </div>
 
       <div style={{ position: 'relative', zIndex: 30, pointerEvents: 'none' }}>

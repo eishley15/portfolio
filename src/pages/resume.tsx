@@ -201,14 +201,14 @@ const education = [
 
 const experience = [
   {
-    period: '2025 – Present',
-    title: 'Marketing Officer',
-    org: 'Code Geeks',
-  },
-  {
     period: '2021 – Present',
     title: 'Freelance Photographer, Videographer, & Editor',
     org: 'Self-Employed',
+  },
+  {
+    period: '2025 – 2026',
+    title: 'Marketing Officer',
+    org: 'Code Geeks',
   },
   {
     period: '2024 – 2025',
@@ -380,15 +380,15 @@ const Resume = () => {
               </p>
               <div className={`flex flex-wrap gap-2 ${mounted ? 'r-fade-up' : 'opacity-0'}`} style={dl(400)}>
                 {[
-                  { icon: '📞', label: '0976-118-7923'         },
-                  { icon: '✉',  label: 'payawalkyle@gmail.com' },
-                  { icon: '📍', label: 'Concepcion, Tarlac'    },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .64 2.57 2 2 0 0 1-.45 2.11L7.91 8.4A16 16 0 0 0 15.6 16l.92-.88a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.57.64A2 2 0 0 1 23 17.18z"/></svg>, label: '0976-118-7923' },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 shrink-0"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>, label: 'payawalkyle@gmail.com' },
+                  { icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 shrink-0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>, label: 'Concepcion, Tarlac' },
                 ].map((c) => (
                   <span
                     key={c.label}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] text-gray-400 text-xs hover:border-[#172995]/40 transition-colors"
                   >
-                    <span className="text-[11px]">{c.icon}</span>
+                    {c.icon}
                     {c.label}
                   </span>
                 ))}
@@ -505,7 +505,7 @@ const Resume = () => {
                 style={dl(1080)}
               >
                 <div className="w-9 h-9 rounded-lg bg-[#172995]/12 border border-[#172995]/20 flex items-center justify-center shrink-0">
-                  <span className="text-base">🏆</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[#7b9fff]"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
                 </div>
                 <div>
                   <p className="text-gray-300 text-xs font-semibold text-left">Academic Excellence</p>
