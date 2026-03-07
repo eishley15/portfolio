@@ -90,11 +90,14 @@ const Contact = () => {
   const handleChange  = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   const handleSubmit  = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!import.meta.env.VITE_WEB3FORMS_KEY) {
+      setHasError(true);
+      return;
+    }
     setSending(true);
     setHasError(false);
     try {
       const data = new FormData(e.currentTarget);
-      data.append('access_key', import.meta.env.VITE_WEB3FORMS_KEY);
       if (!formData.subject) data.set('subject', 'Portfolio Contact Form');
 
       const res = await fetch('https://api.web3forms.com/submit', {
@@ -249,6 +252,7 @@ const Contact = () => {
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
 
+                <input type="hidden" name="access_key" value={import.meta.env.VITE_WEB3FORMS_KEY ?? ''} />
                 <input type="text" name="botcheck" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
