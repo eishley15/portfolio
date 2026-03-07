@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://payawalkyle.vercel.app/sitemap.xml

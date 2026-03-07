@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import StaggeredMenu from '../components/StaggeredMenu';
 import PortfolioFooter from '../components/PortfolioFooter';
+import { menuItems, socialItems } from '@/data/navigation';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 const ANIM_STYLES = `
   @keyframes fadeUp {
@@ -125,7 +127,6 @@ const ANIM_STYLES = `
     transform: translateY(-2px);
   }
 
-  /* Print Styles */
   @media print {
     @page {
       size: A4;
@@ -137,7 +138,6 @@ const ANIM_STYLES = `
       color: black !important;
     }
     
-    /* Hide elements that shouldn't print */
     .no-print,
     .r-dl-btn,
     nav,
@@ -145,7 +145,6 @@ const ANIM_STYLES = `
       display: none !important;
     }
     
-    /* Remove animations for print */
     * {
       animation: none !important;
       transition: none !important;
@@ -153,7 +152,7 @@ const ANIM_STYLES = `
       transform: none !important;
     }
     
-    /* Adjust colors for print */
+
     .bg-\\[\\#0a0a0a\\],
     .bg-gradient-to-br {
       background: white !important;
@@ -173,13 +172,11 @@ const ANIM_STYLES = `
       border-color: #ddd !important;
     }
     
-    /* Ensure content fits on page */
     .r-scroll {
       overflow: visible !important;
       height: auto !important;
     }
     
-    /* Better spacing for print */
     .mb-6 { margin-bottom: 1rem !important; }
     .gap-6 { gap: 1rem !important; }
   }
@@ -297,6 +294,12 @@ const TimelineItem = ({ period, title, subtitle, meta, isLast, mounted, delay }:
 const Resume = () => {
   const [mounted, setMounted] = useState(false);
 
+  usePageMeta({
+    title: 'Resume — Kyle Payawal | Fullstack Developer',
+    description: 'View the resume of Kyle Payawal — Fullstack Developer with experience in MERN/MEVN stacks, AWS, DigitalOcean deployments, and UI/UX design.',
+    canonical: '/resume',
+  });
+
   useEffect(() => {
     if (!document.getElementById('resume-anim')) {
       const s = document.createElement('style');
@@ -307,20 +310,6 @@ const Resume = () => {
     const t = setTimeout(() => setMounted(true), 40);
     return () => clearTimeout(t);
   }, []);
-
-  const menuItems = [
-    { label: 'Home',     ariaLabel: 'Go to home page',   link: '/'         },
-    { label: 'Projects', ariaLabel: 'View our projects', link: '/projects' },
-    { label: 'About',    ariaLabel: 'Learn about us',    link: '/about'    },
-    { label: 'Contact',  ariaLabel: 'Get in touch',      link: '/contact'  },
-    { label: 'Resume',   ariaLabel: 'View our resume',   link: '/resume'   },
-  ];
-
-  const socialItems = [
-    { label: 'Instagram', link: 'https://instagram.com' },
-    { label: 'GitHub',    link: 'https://github.com'    },
-    { label: 'LinkedIn',  link: 'https://linkedin.com'  },
-  ];
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
@@ -386,7 +375,7 @@ const Resume = () => {
                 className={`text-gray-500 text-sm max-w-md leading-relaxed mb-6 ${mounted ? 'r-fade-up' : 'opacity-0'}`}
                 style={dl(320)}
               >
-                Frontend Developer · Student · Creator based in Concepcion, Tarlac.<br />
+                Fullstack Developer · Student · Creator based in Concepcion, Tarlac.<br />
                 Always Curious. Always Learning. Always Creating.
               </p>
               <div className={`flex flex-wrap gap-2 ${mounted ? 'r-fade-up' : 'opacity-0'}`} style={dl(400)}>
@@ -519,8 +508,8 @@ const Resume = () => {
                   <span className="text-base">🏆</span>
                 </div>
                 <div>
-                  <p className="text-gray-300 text-xs font-semibold">Academic Excellence</p>
-                  <p className="text-gray-600 text-xs mt-0.5">Holy Angel University · 2023–2025</p>
+                  <p className="text-gray-300 text-xs font-semibold text-left">Academic Excellence</p>
+                  <p className="text-gray-600 text-xs mt-0.5 text-left">Holy Angel University · 2023–2025</p>
                 </div>
               </div>
             </div>

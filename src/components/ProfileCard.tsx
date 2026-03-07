@@ -15,7 +15,6 @@ const round = (v: number, precision = 3): number => parseFloat(v.toFixed(precisi
 const adjust = (v: number, fMin: number, fMax: number, tMin: number, tMax: number): number =>
   round(tMin + ((tMax - tMin) * (v - fMin)) / (fMax - fMin));
 
-// Inject keyframes once
 const KEYFRAMES_ID = 'pc-keyframes';
 if (typeof document !== 'undefined' && !document.getElementById(KEYFRAMES_ID)) {
   const style = document.createElement('style');
@@ -74,7 +73,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   mobileTiltSensitivity = 5,
   miniAvatarUrl,
   name = 'Kyle Payawal',
-  title = 'Frontend Developer',
+  title = 'Fullstack Developer',
   handle = '@payawalkyle',
   status = 'Online',
   contactText = 'Contact',
@@ -376,7 +375,6 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
     onContactClick?.();
   }, [onContactClick]);
 
-  // Complex styles that require CSS variables and can't be done with Tailwind
   const shineStyle = {
     maskImage: 'var(--icon)',
     maskMode: 'luminance',
@@ -497,13 +495,10 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
               gridArea: '1 / -1'
             }}
           >
-            {/* Shine layer */}
             <div style={shineStyle} />
 
-            {/* Glare layer */}
             <div style={glareStyle} />
 
-            {/* Avatar content */}
             <div
               className="overflow-visible"
               style={{
@@ -584,7 +579,6 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
               )}
             </div>
 
-            {/* Details content */}
             <div
               className="max-h-full overflow-hidden text-center relative z-[5]"
               style={{

@@ -1,20 +1,30 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import ProfileCard from '@/components/ProfileCard';
 import StaggeredMenu from '../components/StaggeredMenu';
 import PortfolioFooter from '../components/PortfolioFooter';
 import { useNavigate } from 'react-router-dom';
-import {
-  SiReact,
-  SiVuedotjs,
-  SiNodedotjs,
-  SiTailwindcss,
-  SiFigma,
-  SiAdobephotoshop,
-  SiAdobepremierepro,
-  SiDavinciresolve
-} from 'react-icons/si';
+import { menuItems, socialItems } from '@/data/navigation';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
-/* ─── Injected CSS (only what Tailwind can't do) ─── */
+const VideoModal = lazy(() => import('@/components/VideoModal'));
+import {
+  SiFigma,
+  SiWordpress,
+  SiAmazon,
+  SiDigitalocean,
+  SiCloudflare,
+  SiPostman,
+  SiNotion,
+  SiGit,
+  SiVercel,
+  SiRaycast,
+  SiShadcnui,
+  SiDavinciresolve,
+  SiAdobelightroom,
+  SiAdobephotoshop
+} from 'react-icons/si';
+import { VscVscode } from "react-icons/vsc";
+
 const STYLES = `
   html, body { overflow: hidden; overscroll-behavior: none; height: 100%; }
 
@@ -30,7 +40,6 @@ const STYLES = `
   .about-scroller::-webkit-scrollbar-track { background: transparent; }
   .about-scroller::-webkit-scrollbar-thumb { background: rgba(23,41,149,0.45); border-radius: 2px; }
 
-  /* Scroll-reveal */
   .sr {
     opacity: 0;
     transform: translateY(22px);
@@ -38,18 +47,15 @@ const STYLES = `
   }
   .sr.visible { opacity: 1 !important; transform: none !important; }
 
-  /* Blob morph */
   @keyframes blob {
     0%,100% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; }
     50%      { border-radius: 30% 60% 70% 40%/50% 60% 30% 60%; }
   }
   .blob { animation: blob 9s ease-in-out infinite; }
 
-  /* Stat card */
   .stat-card { transition: border-color .25s ease, transform .25s ease; }
   .stat-card:hover { border-color: rgba(23,41,149,.55); transform: translateY(-4px); }
 
-  /* Skill pill */
   .spill { transition: border-color .2s, color .2s, background .2s, transform .2s; }
   .spill:hover { border-color: #172995; color: #7b9fff; background: rgba(23,41,149,.08); transform: translateY(-2px); }
   @keyframes skillIn {
@@ -57,59 +63,75 @@ const STYLES = `
     100% { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* Stack tile */
   .stile { transition: transform .25s cubic-bezier(.34,1.56,.64,1), border-color .25s, box-shadow .25s; }
   .stile:hover { transform: translateY(-8px) scale(1.06); border-color: rgba(23,41,149,.55); box-shadow: 0 14px 30px rgba(23,41,149,.22); }
 
-  /* Gallery tile */
   .gtile { transition: transform .3s ease, box-shadow .3s ease; }
   .gtile:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(23,41,149,.22); }
 
-  /* Social icon */
   .soc { transition: border-color .2s, opacity .2s; }
   .soc:hover { border-color: #172995 !important; opacity: 1 !important; }
 
-  /* Primary button */
   .btn-p { position: relative; overflow: hidden; transition: background .3s, box-shadow .3s, transform .2s; }
   .btn-p::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 40%,rgba(255,254,235,.15) 50%,transparent 60%); transform:translateX(-100%); transition:transform .55s ease; }
   .btn-p:hover::after { transform: translateX(100%); }
   .btn-p:hover { background: #1f37b3; box-shadow: 0 0 32px rgba(23,41,149,.5); transform: translateY(-2px); }
 
-  /* Outline button */
   .btn-o { transition: border-color .2s, color .2s, transform .2s; }
   .btn-o:hover { border-color: #172995 !important; color: #7b9fff !important; transform: translateY(-2px); }
 
-  /* Divider grow */
   @keyframes lineGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .divline { transform-origin: center; animation: lineGrow 1s cubic-bezier(.22,1,.36,1) both; }
 
-  /* CTA glow */
   @keyframes glowPulse { 0%,100%{box-shadow:0 0 18px rgba(23,41,149,.2);} 50%{box-shadow:0 0 44px rgba(23,41,149,.5);} }
   .gpulse { animation: glowPulse 3.5s ease-in-out infinite; }
+
+  @keyframes lbIn { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:scale(1); } }
+  .lb-backdrop { animation: fadeIn 0.2s ease both; }
+  .lb-img { animation: lbIn 0.25s cubic-bezier(0.22,1,0.36,1) both; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 `;
 
-/* ─── Data ─── */
 const STATS = [
-  { value: '4+',  label: 'Years Experience'   },
-  { value: '15+', label: 'Projects Delivered'  },
-  { value: '7',   label: 'Certificates'        },
+  { value: '3',  label: 'Years Experience'   },
+  { value: '8', label: 'Projects Delivered'  },
+  { value: '9',   label: 'Certificates'        },
 ];
 
 const SKILLS = {
-  Technical: ['HTML5','CSS3','JavaScript','React','Vue.js','Node.js','Express','Tailwind CSS','Git','REST APIs'],
-  Creative:  ['Web Design','UI/UX Design','Video Editing','Photo Editing','Advertisements','Product Photography'],
-  Tools:     ['Figma','DaVinci Resolve','Adobe Photoshop','Adobe Lightroom','Adobe Premiere Pro'],
+  Technical: ['HTML5','CSS3','JavaScript','React','Vue.js','Angular', 'Node.js','Express','Tailwind CSS','Git','REST APIs', 'MongoDB','MySQL', 'Java', 'Python', 'TypeScript', 'WordPress'],
+  Creative:  ['Web Design','UI/UX Design','Video Editing','Photo Editing','Advertisements'],
 };
 
-const STACKS = [
-  { name: 'React', icon: SiReact },
-  { name: 'Vue', icon: SiVuedotjs },
-  { name: 'Node', icon: SiNodedotjs },
-  { name: 'Tailwind', icon: SiTailwindcss },
+const HARDWARE = [
+  { name: 'MacBook Pro M3 Pro', image: '/tools/macbook-pro.png' },
+  { name: 'Logitech Lift Mouse', image: '/tools/logitech-lift.png' },
+  { name: 'Logitech K780', image: '/tools/logitech-k780.png' },
+  { name: 'Nvision 27"', image: '/tools/nvision-monitor.png' },
+  { name: 'Sony A7IV', image: '/tools/sony-a7iv.webp' },
+  { name: 'DJI Mini 3', image: '/tools/dji-mini3.png' },
+  { name: 'DJI Gimbal', image: '/tools/dji-gimbal.png' },
+  { name: 'Sony A6400', image: '/tools/sony-a6400.webp' },
+  { name: 'Samsung T7 SSD', image: '/tools/samsung-t7.webp' },
+  { name: 'AirPods 3', image: '/tools/airpods-3.webp' },
+];
+
+const SOFTWARE = [
+  { name: 'VS Code', icon: VscVscode  },
   { name: 'Figma', icon: SiFigma },
+  { name: 'WordPress', icon: SiWordpress },
+  { name: 'AWS', icon: SiAmazon },
+  { name: 'DigitalOcean', icon: SiDigitalocean },
+  { name: 'Cloudflare', icon: SiCloudflare },
+  { name: 'Postman', icon: SiPostman },
+  { name: 'Notion', icon: SiNotion },
+  { name: 'Git', icon: SiGit },
+  { name: 'Vercel', icon: SiVercel },
+  { name: 'Raycast', icon: SiRaycast },
+  { name: 'Shadcn UI', icon: SiShadcnui },
+  { name: 'DaVinci Resolve', icon: SiDavinciresolve },
+  { name: 'Lightroom', icon: SiAdobelightroom },
   { name: 'Photoshop', icon: SiAdobephotoshop },
-  { name: 'Premiere', icon: SiAdobepremierepro },
-  { name: 'DaVinci', icon: SiDavinciresolve },
 ];
 
 const SOCIALS = [
@@ -118,7 +140,6 @@ const SOCIALS = [
   { href: 'https://www.instagram.com/payawalkyle/',               src: '/instagram.svg',    alt: 'Instagram' },
 ];
 
-/* ─── Scroll Reveal ─── */
 function useScrollReveal(ref: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const el = ref.current;
@@ -138,7 +159,6 @@ function useScrollReveal(ref: React.RefObject<HTMLDivElement | null>) {
   }, []);
 }
 
-/* ─── Section Heading — centered ─── */
 const SectionHead = ({ tag, title, sub }: { tag: string; title: string; sub?: string }) => (
   <div className="text-center mb-12">
     <p className="sr text-[#172995] text-[10px] font-bold tracking-[0.3em] uppercase" data-delay="0">{tag}</p>
@@ -148,25 +168,47 @@ const SectionHead = ({ tag, title, sub }: { tag: string; title: string; sub?: st
   </div>
 );
 
-/* ─── Horizontal Rule ─── */
 const Rule = () => (
   <div className="divline sr my-16 h-px bg-gradient-to-r from-transparent via-[#172995]/30 to-transparent" data-delay="0" />
 );
 
-/* ─── Main ─── */
 const About = () => {
   const navigate  = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<keyof typeof SKILLS>('Technical');
   const [skillAnimKey, setSkillAnimKey] = useState(0);
   const activeSkills = SKILLS[tab] ?? [];
+  
+  const [selectedVideo, setSelectedVideo] = useState<{ url: string; title: string } | null>(null);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string } | null>(null);
 
   const handleTabClick = (nextTab: keyof typeof SKILLS) => {
     setTab(nextTab);
     setSkillAnimKey((prev) => prev + 1);
   };
+  
+  const openVideoModal = (url: string, title: string) => {
+    setSelectedVideo({ url, title });
+    setIsVideoModalOpen(true);
+  };
+  
+  const closeVideoModal = () => {
+    setIsVideoModalOpen(false);
+    setSelectedVideo(null);
+  };
+
+  const openImageModal = (src: string, alt: string) => setSelectedImage({ src, alt });
+  const closeImageModal = () => setSelectedImage(null);
 
   useScrollReveal(scrollRef);
+
+  usePageMeta({
+    title: 'About — Kyle Payawal | Fullstack Developer',
+    description: 'Learn about Kyle Payawal — a fullstack developer with 3+ years of experience building production-ready MERN/MEVN applications, deployed on AWS and DigitalOcean.',
+    canonical: '/about',
+  });
 
   useEffect(() => {
     if (!document.getElementById('about-styles')) {
@@ -177,23 +219,9 @@ const About = () => {
     }
   }, []);
 
-  const menuItems = [
-    { label: 'Home',     ariaLabel: 'Go to home page',   link: '/'         },
-    { label: 'Projects', ariaLabel: 'View our projects', link: '/projects' },
-    { label: 'About',    ariaLabel: 'Learn about us',    link: '/about'    },
-    { label: 'Contact',  ariaLabel: 'Get in touch',      link: '/contact'  },
-    { label: 'Resume',   ariaLabel: 'View our resume',   link: '/resume'   },
-  ];
-  const socialItems = [
-    { label: 'Instagram', link: 'https://instagram.com' },
-    { label: 'GitHub',    link: 'https://github.com'    },
-    { label: 'LinkedIn',  link: 'https://linkedin.com'  },
-  ];
-
   return (
     <div className="fixed inset-0 overflow-hidden">
 
-      {/* ── Background ── */}
       <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0f23] to-[#0a0a0a]" />
         <div className="blob absolute -top-20 -left-20 w-[500px] h-[500px] bg-[#172995] opacity-[0.12] blur-[80px]" />
@@ -202,7 +230,6 @@ const About = () => {
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulance type='fractalNoise' baseFrequency='3' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
       </div>
 
-      {/* ── Nav ── */}
       <div className="fixed inset-x-0 top-0 z-50 pointer-events-none">
         <StaggeredMenu
           position="right" items={menuItems} socialItems={socialItems}
@@ -214,7 +241,6 @@ const About = () => {
         />
       </div>
 
-      {/* ── Scroll container ── */}
       <div ref={scrollRef} className="about-scroller absolute inset-0 z-10 pt-20">
         <div className="max-w-5xl mx-auto px-6 sm:px-10 lg:px-14 pb-24">
           <section className="py-18 sm:py-20">
@@ -223,7 +249,7 @@ const About = () => {
               <div className="shrink-0 w-full max-w-[420px] lg:max-w-[460px] mx-auto lg:mx-0">
                 <ProfileCard
                   name=""
-                  title="Frontend Developer"
+                  title="Fullstack Developer"
                   handle="payawalkyle"
                   status="Online"
                   contactText="Contact Me"
@@ -255,16 +281,15 @@ const About = () => {
 
                 <div className="sr text-gray-400 text-sm sm:text-[15px] leading-relaxed max-w-[560px] space-y-3" data-delay="240">
                 <p>
-                I’m a 3rd-year Web Development student at Holy Angel University with experience in building responsive and high-performance web applications. I specialize in HTML, CSS, and JavaScript, and work with modern frameworks like React, Vue, and Angular, using stacks such as MERN and MEVN. My recent projects include an e-commerce website with real-time WebSocket notifications and a donation platform for a non-profit organization.
+                I'm a fullstack web developer specializing in building production-ready applications across the entire stack — from responsive frontends to scalable backend APIs and cloud deployments. I work primarily with the MERN and MEVN stacks, using React, Vue.js, Node.js, Express, and MongoDB to deliver complete, maintainable systems.
                 </p>
                 <p>
-                Curiosity drives everything I do — it’s what pushes me to explore new technologies, solve problems creatively, and build solutions that make an impact. Whether it’s deploying apps on AWS and DigitalOcean or experimenting with my own home NAS setup, I’m always eager to learn and improve. For me, web development is more than just coding — it’s a continuous journey of learning, discovery, and creation.
+                My work spans e-commerce platforms, real-time ordering systems, nonprofit management platforms, and multi-user web applications — all independently deployed and maintained on AWS EC2 and DigitalOcean. I take ownership of the full development lifecycle: API design, database architecture, server configuration, and DevOps. I don't just write features — I ship products.
                 </p>
                 </div>
               </div>
             </div>
 
-            {/* Socials + CTA - Aligned horizontally */}
             <div className="sr flex flex-wrap items-center justify-between gap-y-4 mt-10" data-delay="320">
               <div className="flex items-center gap-3">
                 {SOCIALS.map((s) => (
@@ -303,7 +328,6 @@ const About = () => {
               sub="A blend of technical depth and creative breadth — built across years of hands-on work."
             />
 
-            {/* Tabs — centered */}
             <div className="sr flex justify-center gap-2 mb-8" data-delay="80">
               {(Object.keys(SKILLS) as Array<keyof typeof SKILLS>).map((t) => (
                 <button key={t} onClick={() => handleTabClick(t)}
@@ -318,7 +342,6 @@ const About = () => {
               ))}
             </div>
 
-            {/* Pills — centered */}
             <div key={`${tab}-${skillAnimKey}`} className="flex flex-wrap justify-center gap-3">
               {activeSkills.map((skill, i) => (
                 <span key={skill}
@@ -334,19 +357,37 @@ const About = () => {
           <Rule />
           <section className="pb-20">
             <SectionHead
-              tag="< Stack >"
-              title="Tools & Technologies"
-              sub="The technologies I reach for every day to design, build, and ship."
+              tag="< Tools >"
+              title="Tools"
+              sub="The hardware and software behind my daily workflow"
             />
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-              {STACKS.map((s, i) => (
-                <div key={s.name}
-                  className="stile sr aspect-square rounded-2xl border border-gray-800 bg-white/[0.025] flex flex-col items-center justify-center gap-2 cursor-default"
-                  data-delay={i * 50}>
-                  <s.icon className="text-[22px] text-[#FFFEEB]" aria-hidden="true" />
-                  <p className="text-gray-500 text-[9px] font-bold tracking-wider uppercase text-center">{s.name}</p>
-                </div>
-              ))}
+            
+            <div className="mb-10">
+              <p className="sr text-gray-500 text-[10px] font-bold tracking-[0.25em] uppercase text-center mb-5" data-delay="0">Hardware</p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                {HARDWARE.map((item, i) => (
+                  <div key={item.name}
+                    className="stile sr aspect-square rounded-2xl border border-gray-800 bg-white/[0.025] flex flex-col items-center justify-center gap-2 p-3 cursor-default"
+                    data-delay={i * 50}>
+                    <img src={item.image} alt={item.name} className="w-12 h-12 object-contain" />
+                    <p className="text-gray-500 text-[9px] font-bold tracking-wider uppercase text-center leading-tight">{item.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="sr text-gray-500 text-[10px] font-bold tracking-[0.25em] uppercase text-center mb-5" data-delay="0">Software</p>
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-5 gap-3">
+                {SOFTWARE.map((item, i) => (
+                  <div key={item.name}
+                    className="stile sr aspect-square rounded-2xl border border-gray-800 bg-white/[0.025] flex flex-col items-center justify-center gap-2 cursor-default"
+                    data-delay={(HARDWARE.length * 50) + (i * 50)}>
+                    <item.icon className="text-[22px] text-[#FFFEEB]" aria-hidden="true" />
+                    <p className="text-gray-500 text-[9px] font-bold tracking-wider uppercase text-center">{item.name}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -354,13 +395,12 @@ const About = () => {
           <section className="pb-20">
             <SectionHead
               tag="< Beyond Dev >"
-              title="Life Outside the Editor"
+              title="Life Outside the Code"
               sub="Photography, videography, sports, and adventures — the creative fuel behind every line of code."
             />
 
             <div className="grid grid-cols-2 gap-3" style={{ gridTemplateRows: '210px 210px' }}>
 
-              {/* Big left tile — row-span-2 */}
               <div className="gtile sr row-span-2 rounded-2xl border border-gray-800/60 relative flex flex-col items-center justify-end pb-6 overflow-hidden"
                 data-delay="0">
                 <img src="/photography.webp" alt="Photography" className="absolute inset-0 w-full h-full object-cover" />
@@ -369,7 +409,6 @@ const About = () => {
                 <p className="text-gray-400 text-xs relative z-10">Freelance · Events · Products</p>
               </div>
 
-              {/* Top right */}
               <div className="gtile sr rounded-2xl border border-gray-800/60 relative flex flex-col items-center justify-end pb-4 overflow-hidden"
                 data-delay="80">
                 <img src="/thumbnail.webp" alt="Video Editing" className="absolute inset-0 w-full h-full object-cover" />
@@ -377,7 +416,6 @@ const About = () => {
                 <p className="text-[#FFFEEB] text-xs font-bold tracking-[0.15em] uppercase relative z-10">Video Editing</p>
               </div>
 
-              {/* Bottom-right 2×1 sub-grid */}
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'Design', image: '/design.webp' },
@@ -391,6 +429,137 @@ const About = () => {
                     <p className="text-[#FFFEEB] text-[11px] font-bold tracking-[0.15em] uppercase relative z-10">{t.label}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <p className="sr text-center text-gray-500 text-xs font-semibold tracking-[0.18em] uppercase mb-4" data-delay="320">
+                Selected Works
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div 
+                  onClick={() => openImageModal('/photography.jpg', 'Photography 1')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openImageModal('/photography.jpg', 'Photography 1')}
+                  aria-label="Open photography image"
+                  className="sr group relative aspect-video rounded-lg overflow-hidden border border-gray-800/60 cursor-pointer hover:border-[#172995]/60 transition-all duration-300"
+                  data-delay="340"
+                >
+                  <img 
+                    src="/photography.jpg" 
+                    alt="Photography 1" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold tracking-wider uppercase">Photo</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => openVideoModal('https://www.youtube.com/embed/pIeBqjktLVU', 'SplitSmart Video Advertisement')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openVideoModal('https://www.youtube.com/embed/pIeBqjktLVU', 'SplitSmart Video Advertisement')}
+                  aria-label="Play SplitSmart video advertisement"
+                  className="sr group relative aspect-video rounded-lg overflow-hidden border border-gray-800/60 cursor-pointer hover:border-[#172995]/60 transition-all duration-300"
+                  data-delay="360"
+                >
+                  <img 
+                    src="/splitsmart-video.png" 
+                    alt="Splitsmart Video Thumbnail" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => openImageModal('/payawal-branding.jpg', 'Payawal Branding Logo')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openImageModal('/payawal-branding.jpg', 'Payawal Branding Logo')}
+                  aria-label="Open branding design image"
+                  className="sr group relative aspect-video rounded-lg overflow-hidden border border-gray-800/60 cursor-pointer hover:border-[#172995]/60 transition-all duration-300"
+                  data-delay="380"
+                >
+                  <img 
+                    src="/payawal-branding.jpg" 
+                    alt="Payawal Branding Logo" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold tracking-wider uppercase">Design</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => openImageModal('/product-photo.jpg', 'Product Photography')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openImageModal('/product-photo.jpg', 'Product Photography')}
+                  aria-label="Open product photography image"
+                  className="sr group relative aspect-video rounded-lg overflow-hidden border border-gray-800/60 cursor-pointer hover:border-[#172995]/60 transition-all duration-300"
+                  data-delay="400"
+                >
+                  <img 
+                    src="/product-photo.jpg" 
+                    alt="Product Photography" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold tracking-wider uppercase">Photo</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => openVideoModal('https://www.youtube.com/embed/FdmCLOC8JEk', 'Code Geeks Promotional Video')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openVideoModal('https://www.youtube.com/embed/FdmCLOC8JEk', 'Code Geeks Promotional Video')}
+                  aria-label="Play Code Geeks promotional video"
+                  className="sr group relative aspect-video rounded-lg overflow-hidden border border-gray-800/60 cursor-pointer hover:border-[#172995]/60 transition-all duration-300"
+                  data-delay="420"
+                >
+                  <img 
+                    src="/thumbnail.webp" 
+                    alt="Code Geeks Video Thumbnail" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => openImageModal('/product-photo2.jpg', 'Product Photography 2')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openImageModal('/product-photo2.jpg', 'Product Photography 2')}
+                  aria-label="Open product photography 2 image"
+                  className="sr group relative aspect-video rounded-lg overflow-hidden border border-gray-800/60 cursor-pointer hover:border-[#172995]/60 transition-all duration-300"
+                  data-delay="440"
+                >
+                  <img 
+                    src="/product-photo2.jpg" 
+                    alt="Product Photography 2" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold tracking-wider uppercase">Photo</span>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -434,6 +603,45 @@ const About = () => {
 
         </div>
       </div>
+
+      {selectedVideo && (
+        <Suspense fallback={null}>
+          <VideoModal
+            videoUrl={selectedVideo.url}
+            title={selectedVideo.title}
+            isOpen={isVideoModalOpen}
+            onClose={closeVideoModal}
+          />
+        </Suspense>
+      )}
+
+      {selectedImage && (
+        <div
+          className="lb-backdrop fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-10"
+          onClick={closeImageModal}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+
+          <div
+            className="lb-img relative flex items-center justify-center max-w-5xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedImage.src}
+              alt={selectedImage.alt}
+              className="max-w-full max-h-[85vh] rounded-xl object-contain shadow-[0_32px_80px_rgba(0,0,0,0.6)]"
+            />
+
+            <button
+              onClick={closeImageModal}
+              className="absolute -top-4 -right-4 w-9 h-9 rounded-full bg-[#0f0f0f] border border-gray-700 flex items-center justify-center text-gray-400 hover:text-[#FFFEEB] hover:border-[#172995] transition-all duration-200 cursor-pointer shadow-lg text-lg leading-none"
+              aria-label="Close preview"
+            >
+              &#x2715;
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

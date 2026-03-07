@@ -5,21 +5,16 @@ import Button from '@mui/material/Button';
 import DecryptedText from '@/components/DecryptedText';
 import AnimatedContent from '@/components/AnimatedContent';
 import FadeContent from '@/components/FadeContent';
+import TerminalCLI from '@/components/TerminalCLI';
+import { menuItems, socialItems } from '@/data/navigation';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 export default function Home() {
-  const menuItems = [
-    { label: 'Home', ariaLabel: 'Go to home page', link: '/' },
-    { label: 'Projects', ariaLabel: 'View our projects', link: '/projects' },
-    { label: 'About', ariaLabel: 'Learn about us', link: '/about' },
-    { label: 'Contact', ariaLabel: 'Get in touch', link: '/contact' },
-    { label: 'Resume', ariaLabel: 'View our resume', link: '/resume' }
-  ];
-
-  const socialItems = [
-    { label: 'Instagram', link: 'https://instagram.com' },
-    { label: 'GitHub', link: 'https://github.com' },
-    { label: 'LinkedIn', link: 'https://linkedin.com' }
-  ];
+  usePageMeta({
+    title: 'Kyle Payawal | Fullstack Developer',
+    description: 'Fullstack Developer specializing in React, Node.js, and design-driven web experiences. Available for full-time and freelance work.',
+    canonical: '/',
+  });
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
@@ -58,8 +53,8 @@ export default function Home() {
           colors={['#FFFEEB', '#172995']}
           logoUrl="/logo.svg"
           accentColor="#172995"
-          onMenuOpen={() => console.log('Menu opened')}
-          onMenuClose={() => console.log('Menu closed')}
+          onMenuOpen={() => {}}
+          onMenuClose={() => {}}
           isFixed={true}
         />
       </div>
@@ -90,6 +85,11 @@ export default function Home() {
               useOriginalCharsOnly={false}
             />
           </h2>
+
+          <p className="text-[0.75rem] sm:text-[1rem] md:text-[1.25rem] lg:text-[1.5rem]
+                        text-[#172995] font-semibold tracking-[0.15em] uppercase mt-2 mb-0">
+            Fullstack Developer &middot; Open to Work
+          </p>
 
           <AnimatedContent
             distance={100}
@@ -126,7 +126,7 @@ export default function Home() {
                     marginLeft: { xs: 0, sm: 0.5 }
                   }}
                 >
-                  See more about me
+                  Available for hire →
                 </Button>
               </span>
             </Link>
@@ -159,6 +159,8 @@ export default function Home() {
           </div>
         </FadeContent>
       </div>
+
+      <TerminalCLI />
     </div>
   );
 }

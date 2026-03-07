@@ -7,6 +7,7 @@ const Projects = lazy(() => import('./projects'));
 const About = lazy(() => import('./about'));
 const Contact = lazy(() => import('./contact'));
 const Resume = lazy(() => import('./resume'));
+const NotFound = lazy(() => import('./not-found'));
 
 export default function PagesRouter() {
   return (
@@ -18,6 +19,7 @@ export default function PagesRouter() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/resume" element={<Resume />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </Router>

@@ -15,8 +15,9 @@ interface FlowingMenuProps {
   marqueeBgColor?: string;
   marqueeTextColor?: string;
   borderColor?: string;
-  onItemHover?: (index: number) => void;  // Added
-  onItemLeave?: () => void;  // Added
+  onItemHover?: (index: number) => void;
+  onItemLeave?: () => void;
+  onItemClick?: (index: number) => void;
 }
 
 interface MenuItemProps extends MenuItemData {
@@ -26,9 +27,10 @@ interface MenuItemProps extends MenuItemData {
   marqueeTextColor: string;
   borderColor: string;
   isFirst: boolean;
-  itemIndex: number;  // Added
-  onHover?: (index: number) => void;  // Added
-  onLeave?: () => void;  // Added
+  itemIndex: number;
+  onHover?: (index: number) => void;
+  onLeave?: () => void;
+  onClick?: (index: number) => void;
 }
 
 const FlowingMenu: React.FC<FlowingMenuProps> = ({
@@ -39,8 +41,9 @@ const FlowingMenu: React.FC<FlowingMenuProps> = ({
   marqueeBgColor = '#fff',
   marqueeTextColor = '#060010',
   borderColor = '#fff',
-  onItemHover,  // Added
-  onItemLeave   // Added
+  onItemHover,
+  onItemLeave,
+  onItemClick
 }) => {
   return (
     <div className="w-full h-full overflow-hidden" style={{ backgroundColor: bgColor }}>
@@ -55,9 +58,10 @@ const FlowingMenu: React.FC<FlowingMenuProps> = ({
             marqueeTextColor={marqueeTextColor}
             borderColor={borderColor}
             isFirst={idx === 0}
-            itemIndex={idx}  // Added
-            onHover={onItemHover}  // Added
-            onLeave={onItemLeave}  // Added
+            itemIndex={idx}
+            onHover={onItemHover}
+            onLeave={onItemLeave}
+            onClick={onItemClick}
           />
         ))}
       </nav>
@@ -75,9 +79,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
   marqueeTextColor,
   borderColor,
   isFirst,
-  itemIndex,  // Added
-  onHover,    // Added
-  onLeave     // Added
+  itemIndex,
+  onHover,
+  onLeave,
+  onClick
 }) => {
   const itemRef = useRef<HTMLDivElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
@@ -180,6 +185,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
         href={link}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onClick={(e) => {
+          e.preventDefault();
+          onClick?.(itemIndex);
+        }}
         style={{ color: textColor }}
       >
         {text}

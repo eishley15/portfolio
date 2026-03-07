@@ -1,10 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import CardSwap, { Card } from '../components/CardSwap';
 import FlowingMenu from '../components/FlowingMenu';
 import StaggeredMenu from '../components/StaggeredMenu';
 import PortfolioFooter from '../components/PortfolioFooter';
+import { projects, getProjectMenuItems } from '@/data/projects';
+import { menuItems, socialItems } from '@/data/navigation';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
-/* ─── Injected CSS (only what Tailwind can't do) ─── */
+const ProjectModal = lazy(() => import('../components/ProjectModal'));
+
 const STYLES = `
   /* Scroll-reveal */
   .sr {
@@ -32,7 +37,6 @@ const STYLES = `
   .divline { transform-origin: center; animation: lineGrow 1s cubic-bezier(.22,1,.36,1) both; }
 `;
 
-/* ─── Scroll Reveal Hook ─── */
 function useScrollReveal(containerRef: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const container = containerRef.current;
@@ -60,8 +64,41 @@ const Projects = () => {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  usePageMeta({
+    title: 'Projects — Kyle Payawal | Fullstack Developer',
+    description: 'Browse fullstack web development projects by Kyle Payawal — e-commerce platforms, nonprofit systems, restaurant ordering apps, and more.',
+    canonical: '/projects',
+  });
+  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedProject, setSelectedProject] = useState<typeof projects[0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
   useEffect(() => {
-    // Inject styles
+    const projectParam = searchParams.get('project');
+    if (projectParam) {
+      const project = projects.find(p => p.link.includes(projectParam));
+      if (project) {
+        setSelectedProject(project);
+        setIsModalOpen(true);
+      }
+    }
+  }, [searchParams]);
+  
+  const openProjectModal = (project: typeof projects[0]) => {
+    setSelectedProject(project);
+    setIsModalOpen(true);
+    const projectSlug = project.link.split('/').pop();
+    setSearchParams({ project: projectSlug || '' });
+  };
+  
+  const closeProjectModal = () => {
+    setIsModalOpen(false);
+    setSelectedProject(null);
+    setSearchParams({});
+  };
+
+  useEffect(() => {
     if (!document.getElementById('projects-styles')) {
       const s = document.createElement('style');
       s.id = 'projects-styles';
@@ -69,7 +106,6 @@ const Projects = () => {
       document.head.appendChild(s);
     }
 
-    // Handle resize
     const handleResize = () => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     };
@@ -77,7 +113,6 @@ const Projects = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Mount animation
     const t = setTimeout(() => setMounted(true), 40);
 
     return () => {
@@ -88,19 +123,14 @@ const Projects = () => {
 
   useScrollReveal(containerRef);
 
-  // ─── Responsive helpers — checks BOTH width AND height ───
-  // Height tiers:  <500  |  500–599  |  600–699  |  700–849  |  850+
-
   const getCardDimensions = () => {
     const { width: w, height: h } = windowSize;
 
     if (w < 640) {
-      // Mobile: scale card height so it never exceeds 55% of viewport height
       const mobileH = Math.min(300, Math.floor(h * 0.55));
       return { width: 300, height: mobileH };
     }
 
-    // Extremely short (DevTools fully open, very old small screens)
     if (h < 500) {
       if (w < 1024) return { width: 280, height: 200 };
       return { width: 400, height: 240 };
@@ -152,7 +182,6 @@ const Projects = () => {
   const getCardPosition = () => {
     const { width: w } = windowSize;
 
-    // Mobile: center below title
     if (w < 640) {
       return {
         position: 'absolute' as const,
@@ -163,8 +192,6 @@ const Projects = () => {
       };
     }
 
-    // All non-mobile viewports — always anchor bottom-right.
-    // Card size + transform adjustments handle the visual fit per height tier.
     return {
       position: 'absolute' as const,
       bottom: 0,
@@ -188,7 +215,6 @@ const Projects = () => {
     const { width: w, height: h } = windowSize;
     if (w < 640) return '56px';
     if (w < 1024) return '68px';
-    // Clamp so title never overlaps navbar on any short screen
     if (h < 500) return '52px';
     if (h < 600) return '56px';
     if (h < 700) return '64px';
@@ -196,7 +222,6 @@ const Projects = () => {
     return 'calc(50vh - 420px)';
   };
 
-  // Hide the subtitle hint text on very short screens to save space
   const showSubtitle = windowSize.height >= 560;
 
   const isMobile = windowSize.width < 640;
@@ -204,75 +229,18 @@ const Projects = () => {
   const dl = (ms: number) => ({ animationDelay: `${ms}ms` });
   const cls = (base: string) => `${base} ${mounted ? '' : 'opacity-0'}`;
 
-  const menuItems = [
-    { label: 'Home', ariaLabel: 'Go to home page', link: '/' },
-    { label: 'Projects', ariaLabel: 'View our projects', link: '/projects' },
-    { label: 'About', ariaLabel: 'Learn about us', link: '/about' },
-    { label: 'Contact', ariaLabel: 'Get in touch', link: '/contact' },
-    { label: 'Resume', ariaLabel: 'View our resume', link: '/resume' }
-  ];
-
-  const socialItems = [
-    { label: 'Instagram', link: 'https://instagram.com' },
-    { label: 'GitHub', link: 'https://github.com' },
-    { label: 'LinkedIn', link: 'https://linkedin.com' }
-  ];
-
-  const projects = [
-    {
-      id: 0,
-      name: 'IMMFI',
-      description: 'Official IMMFI website focusing on deployment and integrating real-time updates and interactive features to enhance user engagement and support volunteer and donation processes.',
-      image: '/immfi.webp',
-      link: '/projects/immfi',
-      url: 'immfi.org'
-    },
-    {
-      id: 1,
-      name: 'Buffs Chicken',
-      description: 'E-commerce platform for a startup food business with SEO optimization, focusing on backend development, and responsive functionality.',
-      image: '/buffs.webp',
-      link: '/projects/buffs',
-      url: 'buffschicken.com'
-    },
-    {
-      id: 2,
-      name: 'Ben Ibe',
-      description: 'Flower shop e-commerce platform streamlining ordering and admin processes, with frontend and backend development for a seamless user experience.',
-      image: '/benibe.webp',
-      link: '/projects/benibe',
-      url: 'https://github.com/eishley15/ben-ibe-website.git'
-    },
-    {
-      id: 3,
-      name: 'Splitsmart',
-      description: 'Built a group expense-tracking web app, leading frontend development and UI/UX design with a focus on intuitive, responsive user experiences.',
-      image: '/splitsmart.webp',
-      link: '/projects/splitsmart',
-      url: 'https://github.com/chrztyn/6WCSERVER-Final-Project.git'
-    }
-  ];
-
-  const projectMenuItems = projects.map(project => ({
-    link: project.link,
-    text: project.name,
-    image: project.image
-  }));
+  const projectMenuItems = getProjectMenuItems();
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
 
-      {/* ── Background ── */}
       <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
-        {/* Base gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0f23] to-[#0a0a0a]"></div>
 
-        {/* Animated blobs */}
         <div className="absolute top-0 -left-4 w-96 h-96 bg-[#172995] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
         <div className="absolute top-0 -right-4 w-96 h-96 bg-purple-700 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-20 w-96 h-96 bg-blue-700 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
-        {/* Subtle noise overlay */}
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -281,7 +249,6 @@ const Projects = () => {
         ></div>
       </div>
 
-      {/* ── Navigation ── */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, pointerEvents: 'none' }}>
         <StaggeredMenu
           position="right"
@@ -295,13 +262,12 @@ const Projects = () => {
           colors={['#FFFEEB', '#172995']}
           logoUrl="/logo.svg"
           accentColor="#172995"
-          onMenuOpen={() => console.log('Menu opened')}
-          onMenuClose={() => console.log('Menu closed')}
+          onMenuOpen={() => {}}
+          onMenuClose={() => {}}
           isFixed={true}
         />
       </div>
 
-      {/* ── Title Block ── */}
       <div
         className="absolute left-0 right-0 z-20 text-center"
         style={{ top: getTitleTop() }}
@@ -311,7 +277,7 @@ const Projects = () => {
             {'< Portfolio >'}
           </p>
           <h2 className={cls(`p-fade-up text-[#FFFEEB] ${getTitleSize()} font-black tracking-tight leading-tight mt-1.5 sm:mt-2`)} style={dl(60)}>
-            THE JOURNEY SO FAR
+            MY BEST WORK SO FAR
           </h2>
           {showSubtitle && (
             <p className={cls('p-fade-up text-gray-500 text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2 max-w-xs sm:max-w-md md:max-w-lg mx-auto leading-relaxed')} style={dl(100)}>
@@ -322,7 +288,6 @@ const Projects = () => {
         </div>
       </div>
 
-      {/* ── Project Menu (Behind Cards) ── */}
       <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full ${getMenuHeight()} z-5`}>
         <div className="w-full h-full">
           <FlowingMenu
@@ -334,18 +299,18 @@ const Projects = () => {
             marqueeTextColor="#FFFEEB"
             borderColor="#333"
             onItemHover={(index) => {
-              console.log('Hovering item:', index);
               setActiveProject(index);
             }}
             onItemLeave={() => {
-              console.log('Left menu, returning to 0');
               setActiveProject(0);
+            }}
+            onItemClick={(index) => {
+              openProjectModal(projects[index]);
             }}
           />
         </div>
       </div>
 
-      {/* ── Card Stack ── */}
       <div
         className="transform z-10 px-4 sm:p-0"
         style={getCardPosition()}
@@ -362,23 +327,33 @@ const Projects = () => {
               height={cardDims.height}
             >
               {projects.map((project, idx) => (
-                <Card key={idx} customClass="bg-gradient-to-br from-[#0a0a0a]/95 to-[#1a1a2e]/95 border-[#172995] backdrop-blur-md shadow-2xl">
-                  <div className="w-full h-full p-4 sm:p-5 md:p-6 lg:p-8 flex flex-col justify-between gap-2 sm:gap-3">
+                <Card key={idx} customClass="bg-gradient-to-br from-[#0a0a0a]/95 to-[#1a1a2e]/95 border-[#172995] backdrop-blur-md shadow-2xl cursor-pointer transition-all duration-500 hover:border-[#172995]/80 hover:shadow-[0_0_30px_rgba(23,41,149,0.3)]">
+                  <div 
+                    onClick={() => openProjectModal(project)}
+                    className="group w-full h-full p-4 sm:p-5 md:p-6 lg:p-8 flex flex-col justify-between gap-2 sm:gap-3 transition-all duration-300 relative"
+                  >
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="bg-[#172995] text-[#FFFEEB] px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5">
+                        <span>View Details</span>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+
                     <div className="flex-shrink-0">
-                      <p className="text-[#172995] text-[9px] sm:text-[10px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase mb-1 sm:mb-2">
+                      <p className="text-[#172995] text-[9px] sm:text-[10px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase mb-1 sm:mb-2 group-hover:text-[#1a30b0] transition-colors duration-300">
                         Project {String(idx + 1).padStart(2, '0')}
                       </p>
-                      <h3 className="text-[#FFFEEB] text-lg sm:text-xl md:text-2xl lg:text-3xl font-black tracking-tight mb-1.5 sm:mb-2 leading-tight">
+                      <h3 className="text-[#FFFEEB] text-lg sm:text-xl md:text-2xl lg:text-3xl font-black tracking-tight mb-1.5 sm:mb-2 leading-tight group-hover:text-white transition-colors duration-300">
                         {project.name}
                       </h3>
-                      <p className="text-gray-400 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2 sm:line-clamp-3">
+                      <p className="text-gray-400 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2 sm:line-clamp-3 group-hover:text-gray-300 transition-colors duration-300">
                         {project.description}
                       </p>
                     </div>
 
-                    {/* Browser Mockup Frame */}
-                    <div className="w-full flex-1 min-h-0 rounded-lg sm:rounded-xl overflow-hidden border border-[#172995]/40 shadow-xl transition-all duration-300 hover:border-[#172995]/60 hover:shadow-2xl">
-                      {/* Fake Browser Chrome */}
+                    <div className="w-full flex-1 min-h-0 rounded-lg sm:rounded-xl overflow-hidden border border-[#172995]/40 shadow-xl transition-all duration-300 group-hover:border-[#172995]/80 group-hover:shadow-[0_0_20px_rgba(23,41,149,0.4)]">
                       <div className="bg-[#1a1a2e] px-2 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 border-b border-[#172995]/20">
                         <div className="flex items-center gap-1 sm:gap-1.5">
                           <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#ff5f57]" />
@@ -394,16 +369,15 @@ const Projects = () => {
                           </span>
                         </div>
                       </div>
-                      {/* Screenshot */}
                       <div className="w-full h-full bg-[#0a0a0a] relative overflow-hidden">
                         <img
                           src={project.image}
                           alt={project.name}
-                          className="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105"
+                          className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-110"
                           loading="lazy"
                         />
-                        {/* Overlay gradient for better depth */}
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/20 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#172995]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                       </div>
                     </div>
                   </div>
@@ -414,7 +388,6 @@ const Projects = () => {
         </div>
       </div>
 
-      {/* ── Footer ── */}
       <div className="absolute inset-x-0 bottom-0 z-30 px-3 sm:px-6 md:px-8 pb-1.5 sm:pb-2">
         <PortfolioFooter
           className={cls('p-fade-in')}
@@ -425,6 +398,16 @@ const Projects = () => {
           showContactInfo={!isMobile}
         />
       </div>
+
+      {selectedProject && (
+        <Suspense fallback={null}>
+          <ProjectModal
+            project={selectedProject}
+            isOpen={isModalOpen}
+            onClose={closeProjectModal}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

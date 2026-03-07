@@ -107,32 +107,27 @@ const CardSwap: React.FC<CardSwapProps> = ({
   const intervalRef = useRef<number>(0);
   const container = useRef<HTMLDivElement>(null);
 
-  // Handle external activeCardIndex control with smoother animation
   useEffect(() => {
     if (activeCardIndex === undefined) return;
     
     const currentFront = order.current[0];
     if (currentFront === activeCardIndex) return;
 
-    // Kill the current hover animation if it exists
     if (currentTweenRef.current) {
       currentTweenRef.current.kill();
       currentTweenRef.current = null;
     }
 
-    // Clear any running auto-swap animations
     if (tlRef.current) {
       tlRef.current.kill();
     }
     clearInterval(intervalRef.current);
 
-    // Build new order with activeCard in front
     const newOrder = [
       activeCardIndex,
       ...order.current.filter(idx => idx !== activeCardIndex)
     ];
 
-    // Create animation
     const tl = gsap.timeline({
       onComplete: () => {
         currentTweenRef.current = null;
@@ -147,7 +142,6 @@ const CardSwap: React.FC<CardSwapProps> = ({
       
       const slot = makeSlot(position, cardDistance, verticalDistance, refs.length);
       
-      // Animate to new position
       tl.to(
         el,
         {
@@ -158,11 +152,11 @@ const CardSwap: React.FC<CardSwapProps> = ({
           yPercent: -50,
           skewY: skewAmount,
           zIndex: slot.zIndex,
-          duration: 0.9,
-          ease: 'expo.out',
-          overwrite: true, // KEY FIX: Overwrite any conflicting animations
+          duration: 0.3,
+          ease: 'power3.out',
+          overwrite: true,
         },
-        position * 0.05 
+        0
       );
     });
 
@@ -178,7 +172,6 @@ const CardSwap: React.FC<CardSwapProps> = ({
     });
 
     const swap = () => {
-      // Don't auto-swap if activeCardIndex is being controlled externally
       if (activeCardIndex !== undefined) return;
       
       if (order.current.length < 2) return;
@@ -242,7 +235,6 @@ const CardSwap: React.FC<CardSwapProps> = ({
       });
     };
 
-    // Only start auto-swap if not externally controlled
     if (activeCardIndex === undefined) {
       swap();
       intervalRef.current = window.setInterval(swap, delay);

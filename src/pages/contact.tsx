@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import StaggeredMenu from '../components/StaggeredMenu';
 import PortfolioFooter from '../components/PortfolioFooter';
+import { menuItems, socialItems } from '@/data/navigation';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 type FormData = {
   name: string;
@@ -9,7 +11,6 @@ type FormData = {
   message: string;
 };
 
-/* ─── CSS animations injected once into <head> ─── */
 const ANIM_STYLES = `
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(28px); }
@@ -39,12 +40,10 @@ const ANIM_STYLES = `
   .c-slide-r   { animation: slideInRight 0.65s cubic-bezier(0.22,1,0.36,1) both; }
   .c-success   { animation: successPop  0.5s  cubic-bezier(0.22,1,0.36,1) both; }
 
-  /* focus glow */
   .c-input:focus {
     box-shadow: 0 0 0 1px #172995, 0 0 20px rgba(23,41,149,0.2);
   }
 
-  /* button shimmer sweep */
   .c-btn::after {
     content: '';
     position: absolute;
@@ -56,11 +55,9 @@ const ANIM_STYLES = `
   .c-btn:hover::after { transform: translateX(100%); }
   .c-btn:hover { box-shadow: 0 0 28px rgba(23,41,149,.45); }
 
-  /* info row nudge */
   .c-info-row { transition: transform 0.2s ease; }
   .c-info-row:hover { transform: translateX(5px); }
 
-  /* social pop */
   .c-social { transition: transform 0.2s ease, border-color 0.2s ease; }
   .c-social:hover { transform: translateY(-3px); }
 `;
@@ -70,7 +67,14 @@ const Contact = () => {
   const [focused, setFocused]     = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending]     = useState(false);
+  const [hasError, setHasError]   = useState(false);
   const [mounted, setMounted]     = useState(false);
+
+  usePageMeta({
+    title: 'Contact — Kyle Payawal | Fullstack Developer',
+    description: "Get in touch with Kyle Payawal — open to freelance projects, full-time opportunities, and creative collaborations.",
+    canonical: '/contact',
+  });
 
   useEffect(() => {
     if (!document.getElementById('contact-anim')) {
@@ -83,26 +87,31 @@ const Contact = () => {
     return () => clearTimeout(t);
   }, []);
 
-  const menuItems = [
-    { label: 'Home',     ariaLabel: 'Go to home page',   link: '/'         },
-    { label: 'Projects', ariaLabel: 'View our projects', link: '/projects' },
-    { label: 'About',    ariaLabel: 'Learn about us',    link: '/about'    },
-    { label: 'Contact',  ariaLabel: 'Get in touch',      link: '/contact'  },
-    { label: 'Resume',   ariaLabel: 'View our resume',   link: '/resume'   },
-  ];
-  const socialItems = [
-    { label: 'Instagram', link: 'https://instagram.com' },
-    { label: 'GitHub',    link: 'https://github.com'    },
-    { label: 'LinkedIn',  link: 'https://linkedin.com'  },
-  ];
-
   const handleChange  = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   const handleSubmit  = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSending(true);
-    await new Promise((r) => setTimeout(r, 1800));
-    setSending(false);
-    setSubmitted(true);
+    setHasError(false);
+    try {
+      const data = new FormData(e.currentTarget);
+      data.append('access_key', import.meta.env.VITE_WEB3FORMS_KEY);
+      if (!formData.subject) data.set('subject', 'Portfolio Contact Form');
+
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: data,
+      });
+      const json = await res.json();
+      if (json.success) {
+        setSubmitted(true);
+      } else {
+        setHasError(true);
+      }
+    } catch {
+      setHasError(true);
+    } finally {
+      setSending(false);
+    }
   };
 
   const contactInfo = [
@@ -132,14 +141,12 @@ const Contact = () => {
     },
   ];
 
-  /* shorthand delay helper */
   const dl = (ms: number) => ({ animationDelay: `${ms}ms` });
   const cls = (base: string) => `${base} ${mounted ? '' : 'opacity-0'}`;
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
 
-      {/* ── Background ── */}
       <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0f23] to-[#0a0a0a]" />
         <div className="absolute top-0 -left-4 w-96 h-96 bg-[#172995] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
@@ -148,7 +155,6 @@ const Contact = () => {
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulance type='fractalNoise' baseFrequency='3' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
       </div>
 
-      {/* ── Nav ── */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, pointerEvents: 'none' }}>
         <StaggeredMenu
           position="right" items={menuItems} socialItems={socialItems}
@@ -160,12 +166,10 @@ const Contact = () => {
         />
       </div>
 
-      {/* ── Content ── */}
       <div className="absolute inset-0 z-10 flex items-center justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-16 overflow-y-auto">
         <div className="w-full max-w-6xl flex flex-col gap-10 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
 
-          {/* ── LEFT ── */}
           <div className="flex flex-col justify-center items-start">
 
             <p className={`text-left ${cls('c-fade-up')}`} style={{ ...dl(80), color: '#172995', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '1rem' }}>
@@ -191,7 +195,6 @@ const Contact = () => {
               Have a project in mind, a question, or just want to connect? I'm always open to new collaborations and opportunities.
             </p>
 
-            {/* Contact rows */}
             <div className="flex flex-col gap-4 mb-10">
               {contactInfo.map((item, i) => (
                 <div
@@ -210,7 +213,6 @@ const Contact = () => {
               ))}
             </div>
 
-            {/* Socials */}
             <div className={`flex gap-4 ${mounted ? 'c-fade-up' : 'opacity-0'}`} style={dl(770)}>
               {[
                 { label: 'LinkedIn',  href: 'https://www.linkedin.com/in/kyle-payawal-612400377/', src: '/linkedin-alt.svg' },
@@ -225,7 +227,6 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* ── RIGHT: Form ── */}
           <div className={`flex flex-col justify-center ${mounted ? 'c-slide-r' : 'opacity-0'}`} style={dl(200)}>
             {submitted ? (
               <div className="c-success flex flex-col items-center justify-center text-center gap-6 py-20">
@@ -247,6 +248,8 @@ const Contact = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+
+                <input type="text" name="botcheck" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {([
@@ -299,6 +302,11 @@ const Contact = () => {
                   />
                 </div>
 
+                {hasError && (
+                  <p className="text-red-400 text-xs text-center -mb-2">
+                    Something went wrong. Please try again or email me directly at payawalkyle@gmail.com
+                  </p>
+                )}
                 <div className={`flex items-center gap-4 mt-2 ${mounted ? 'c-fade-up' : 'opacity-0'}`} style={dl(620)}>
                   <div className="flex-1 h-px bg-gray-800" />
                   <button type="submit" disabled={sending}
