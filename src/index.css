@@ -4,6 +4,40 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.home-cta-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2.5rem;
+  background: #172995;
+  color: #FFFEEB;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.home-cta-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,254,235,0.14) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.55s ease;
+}
+.home-cta-btn:hover::after { transform: translateX(100%); }
+.home-cta-btn:hover {
+  background: #1f37b3;
+  box-shadow: 0 0 32px rgba(23,41,149,0.5);
+  transform: translateY(-2px);
+}
+
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

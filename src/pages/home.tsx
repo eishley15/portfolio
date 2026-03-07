@@ -1,17 +1,41 @@
 import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import StaggeredMenu from '../components/StaggeredMenu';
 import DecryptedText from '@/components/DecryptedText';
-import AnimatedContent from '@/components/AnimatedContent';
-import FadeContent from '@/components/FadeContent';
 import TerminalCLI from '@/components/TerminalCLI';
 import { menuItems, socialItems } from '@/data/navigation';
 import { usePageMeta } from '@/hooks/usePageMeta';
 
 const FaultyTerminal = lazy(() => import('../components/FaultyTerminal'));
+const StaggeredMenu = lazy(() => import('../components/StaggeredMenu'));
+const AnimatedContent = lazy(() => import('@/components/AnimatedContent'));
+const FadeContent = lazy(() => import('@/components/FadeContent'));
 
 const TerminalPlaceholder = () => (
   <div style={{ width: '100%', height: '100%', background: '#020b2e' }} />
+);
+
+const CTAButton = () => (
+  <Link to="/about" style={{ textDecoration: 'none' }}>
+    <span className="inline-block pointer-events-auto mt-4 sm:mt-6">
+      <button className="home-cta-btn">
+        Open to Work →
+      </button>
+    </span>
+  </Link>
+);
+
+const SocialIcons = () => (
+  <div className="flex space-x-4 sm:space-x-6 pointer-events-auto ml-0 sm:ml-1">
+    <Link to="https://www.linkedin.com/in/kyle-payawal-612400377/" target="_blank" style={{ textDecoration: 'none' }}>
+      <img src="/linkedin-alt.svg" alt="linkedin logo" className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 cursor-pointer hover:opacity-80 transition-opacity" />
+    </Link>
+    <Link to="https://github.com/eishley15" target="_blank" style={{ textDecoration: 'none' }}>
+      <img src="/github-alt.svg" alt="github logo" className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 cursor-pointer hover:opacity-80 transition-opacity" />
+    </Link>
+    <Link to="https://www.instagram.com/payawalkyle/" target="_blank" style={{ textDecoration: 'none' }}>
+      <img src="/instagram.svg" alt="instagram logo" className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 cursor-pointer hover:opacity-80 transition-opacity" />
+    </Link>
+  </div>
 );
 
 export default function Home() {
@@ -48,22 +72,24 @@ export default function Home() {
       </div>
 
       <div style={{ position: 'relative', zIndex: 30, pointerEvents: 'none' }}>
-        <StaggeredMenu
-          position="right"
-          items={menuItems}
-          socialItems={socialItems}
-          displaySocials
-          displayItemNumbering={true}
-          menuButtonColor="#FFFEEB"
-          openMenuButtonColor="#000000"
-          changeMenuColorOnOpen={true}
-          colors={['#FFFEEB', '#172995']}
-          logoUrl="/logo.svg"
-          accentColor="#172995"
-          onMenuOpen={() => {}}
-          onMenuClose={() => {}}
-          isFixed={true}
-        />
+        <Suspense fallback={null}>
+          <StaggeredMenu
+            position="right"
+            items={menuItems}
+            socialItems={socialItems}
+            displaySocials
+            displayItemNumbering={true}
+            menuButtonColor="#FFFEEB"
+            openMenuButtonColor="#000000"
+            changeMenuColorOnOpen={true}
+            colors={['#FFFEEB', '#172995']}
+            logoUrl="/logo.svg"
+            accentColor="#172995"
+            onMenuOpen={() => {}}
+            onMenuClose={() => {}}
+            isFixed={true}
+          />
+        </Suspense>
       </div>
 
       <div className="absolute z-20 top-0 left-0 w-full h-full flex flex-col justify-end items-start pointer-events-none
@@ -98,59 +124,29 @@ export default function Home() {
             Fullstack Developer &middot; Open to Work
           </p>
 
-          <AnimatedContent
-            distance={100}
-            direction="vertical"
-            reverse={false}
-            duration={0.8}
-            ease="power3.out"
-            initialOpacity={0}
-            animateOpacity
-            scale={1}
-            threshold={0.1}
-            delay={0}
-          >
-            <Link to="/about" style={{ textDecoration: 'none' }}>
-              <span className="inline-block pointer-events-auto mt-4 sm:mt-6">
-                <button
-                  className="rounded-lg border border-[#222] text-[#222] font-medium
-                             px-4 sm:px-5 py-2 sm:py-3 text-sm sm:text-base
-                             bg-[#FFFEEB] shadow-sm transition-colors duration-200
-                             hover:border-[#172995] hover:text-[#172995] hover:bg-[#cfd8fc]
-                             cursor-pointer"
-                >
-                  Available for hire →
-                </button>
-              </span>
-            </Link>
-          </AnimatedContent>
+          <Suspense fallback={<CTAButton />}>
+            <AnimatedContent
+              distance={100}
+              direction="vertical"
+              reverse={false}
+              duration={0.8}
+              ease="power3.out"
+              initialOpacity={0}
+              animateOpacity
+              scale={1}
+              threshold={0.1}
+              delay={0}
+            >
+              <CTAButton />
+            </AnimatedContent>
+          </Suspense>
         </div>
 
-        <FadeContent blur={true} duration={1000} initialOpacity={0}>
-          <div className="flex space-x-4 sm:space-x-6 pointer-events-auto ml-0 sm:ml-1">
-            <Link to="https://www.linkedin.com/in/kyle-payawal-612400377/" target="_blank" style={{ textDecoration: 'none' }}>
-              <img
-                src="/linkedin-alt.svg"
-                alt="linkedin logo"
-                className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 cursor-pointer hover:opacity-80 transition-opacity"
-              />
-            </Link>
-            <Link to="https://github.com/eishley15" target="_blank" style={{ textDecoration: 'none' }}>
-              <img
-                src="/github-alt.svg"
-                alt="github logo"
-                className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 cursor-pointer hover:opacity-80 transition-opacity"
-              />
-            </Link>
-            <Link to="https://www.instagram.com/payawalkyle/" target="_blank" style={{ textDecoration: 'none' }}>
-              <img
-                src="/instagram.svg"
-                alt="instagram logo"
-                className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 cursor-pointer hover:opacity-80 transition-opacity"
-              />
-            </Link>
-          </div>
-        </FadeContent>
+        <Suspense fallback={<SocialIcons />}>
+          <FadeContent blur={true} duration={1000} initialOpacity={0}>
+            <SocialIcons />
+          </FadeContent>
+        </Suspense>
       </div>
 
       <TerminalCLI />
