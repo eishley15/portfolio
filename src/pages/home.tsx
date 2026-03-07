@@ -1,13 +1,18 @@
+import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import FaultyTerminal from '../components/FaultyTerminal';
 import StaggeredMenu from '../components/StaggeredMenu';
-import Button from '@mui/material/Button';
 import DecryptedText from '@/components/DecryptedText';
 import AnimatedContent from '@/components/AnimatedContent';
 import FadeContent from '@/components/FadeContent';
 import TerminalCLI from '@/components/TerminalCLI';
 import { menuItems, socialItems } from '@/data/navigation';
 import { usePageMeta } from '@/hooks/usePageMeta';
+
+const FaultyTerminal = lazy(() => import('../components/FaultyTerminal'));
+
+const TerminalPlaceholder = () => (
+  <div style={{ width: '100%', height: '100%', background: '#020b2e' }} />
+);
 
 export default function Home() {
   usePageMeta({
@@ -19,25 +24,27 @@ export default function Home() {
   return (
     <div style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
-        <FaultyTerminal
-          scale={3.5}
-          gridMul={[2, 1]}
-          digitSize={1.2}
-          timeScale={0.5}
-          pause={false}
-          scanlineIntensity={0.5}
-          glitchAmount={1}
-          flickerAmount={1}
-          noiseAmp={1}
-          chromaticAberration={0}
-          dither={0}
-          curvature={0.1}
-          tint="#172995"
-          mouseReact
-          mouseStrength={0.5}
-          pageLoadAnimation
-          brightness={0.6}
-        />
+        <Suspense fallback={<TerminalPlaceholder />}>
+          <FaultyTerminal
+            scale={3.5}
+            gridMul={[2, 1]}
+            digitSize={1.2}
+            timeScale={0.5}
+            pause={false}
+            scanlineIntensity={0.5}
+            glitchAmount={1}
+            flickerAmount={1}
+            noiseAmp={1}
+            chromaticAberration={0}
+            dither={0}
+            curvature={0.1}
+            tint="#172995"
+            mouseReact
+            mouseStrength={0.5}
+            pageLoadAnimation
+            brightness={0.6}
+          />
+        </Suspense>
       </div>
 
       <div style={{ position: 'relative', zIndex: 30, pointerEvents: 'none' }}>
@@ -105,29 +112,15 @@ export default function Home() {
           >
             <Link to="/about" style={{ textDecoration: 'none' }}>
               <span className="inline-block pointer-events-auto mt-4 sm:mt-6">
-                <Button
-                  variant="outlined"
-                  sx={{
-                    borderRadius: 2,
-                    borderColor: '#222',
-                    color: '#222',
-                    fontWeight: 500,
-                    px: { xs: 2, sm: 2.5 },
-                    py: { xs: 1, sm: 1.5 },
-                    fontSize: { xs: 14, sm: 16 },
-                    textTransform: 'none',
-                    background: '#FFFEEB',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                    '&:hover': {
-                      borderColor: '#172995',
-                      color: '#172995',
-                      background: 'rgb(207, 216, 252)'
-                    },
-                    marginLeft: { xs: 0, sm: 0.5 }
-                  }}
+                <button
+                  className="rounded-lg border border-[#222] text-[#222] font-medium
+                             px-4 sm:px-5 py-2 sm:py-3 text-sm sm:text-base
+                             bg-[#FFFEEB] shadow-sm transition-colors duration-200
+                             hover:border-[#172995] hover:text-[#172995] hover:bg-[#cfd8fc]
+                             cursor-pointer"
                 >
                   Available for hire →
-                </Button>
+                </button>
               </span>
             </Link>
           </AnimatedContent>
