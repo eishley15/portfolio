@@ -40,6 +40,12 @@ const ANIM_STYLES = `
   .c-slide-r   { animation: slideInRight 0.65s cubic-bezier(0.22,1,0.36,1) both; }
   .c-success   { animation: successPop  0.5s  cubic-bezier(0.22,1,0.36,1) both; }
 
+  .c-input {
+    min-height: 48px;
+    font-size: 16px;
+    box-sizing: border-box;
+    width: 100%;
+  }
   .c-input:focus {
     box-shadow: 0 0 0 1px #172995, 0 0 20px rgba(23,41,149,0.2);
   }
@@ -60,6 +66,52 @@ const ANIM_STYLES = `
 
   .c-social { transition: transform 0.2s ease, border-color 0.2s ease; }
   .c-social:hover { transform: translateY(-3px); }
+
+  @media (max-width: 768px) {
+    .c-fade-up, .c-slide-l, .c-slide-r {
+      animation-duration: 0.4s;
+    }
+    .c-submit-btn {
+      width: 100% !important;
+      padding: 16px !important;
+      font-size: 16px !important;
+      justify-content: center;
+    }
+    .c-textarea-mobile {
+      min-height: 140px;
+    }    /* Bug 2 — Mobile spacing fixes */
+    .c-contact-info-row {
+      margin-bottom: 12px;
+      padding: 14px 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .c-contact-socials-row {
+      margin-top: 24px;
+      margin-bottom: 32px;
+      gap: 16px;
+    }
+    .c-contact-form-col {
+      margin-top: 32px;
+    }
+    .c-input {
+      font-size: 16px !important;
+      padding: 14px 16px !important;
+      margin-bottom: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }  }
+  @media (min-width: 769px) {
+    .c-input {
+      font-size: 0.875rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .c-fade-up, .c-fade-in, .c-slide-l, .c-slide-r, .c-success {
+      animation-duration: 0.01ms !important;
+    }
+  }
 `;
 
 const Contact = () => {
@@ -169,7 +221,7 @@ const Contact = () => {
         />
       </div>
 
-      <div className="absolute inset-0 z-10 flex items-center justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-16 overflow-y-auto">
+      <div className="absolute inset-0 z-10 flex items-start md:items-center justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-20 md:pt-16 overflow-y-auto">
         <div className="w-full max-w-6xl flex flex-col gap-10 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
 
@@ -179,7 +231,8 @@ const Contact = () => {
               {'<Get In Touch>'}
             </p>
 
-            <h1 className="text-[#FFFEEB] text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-left w-full">
+            <h1 className="text-[#FFFEEB] font-bold leading-tight mb-6 text-left w-full"
+              style={{ fontSize: 'clamp(2rem, 8vw, 3.75rem)' }}>
               {['LET\'S BUILD', 'SOMETHING', 'GREAT.'].map((word, i) => (
                 <span
                   key={word}
@@ -198,11 +251,11 @@ const Contact = () => {
               Have a project in mind, a question, or just want to connect? I'm always open to new collaborations and opportunities.
             </p>
 
-            <div className="flex flex-col gap-4 mb-10">
+            <div className="flex flex-col gap-3 mb-10">
               {contactInfo.map((item, i) => (
                 <div
                   key={item.label}
-                  className={`c-info-row flex items-center gap-4 group ${mounted ? 'c-slide-l' : 'opacity-0'}`}
+                  className={`c-contact-info-row c-info-row flex items-center gap-4 group ${mounted ? 'c-slide-l' : 'opacity-0'}`}
                   style={dl(510 + i * 80)}
                 >
                   <div className="w-10 h-10 rounded-lg border border-[#172995]/40 flex items-center justify-center text-[#172995] group-hover:bg-[#172995]/10 transition-colors duration-200 flex-shrink-0">
@@ -216,7 +269,7 @@ const Contact = () => {
               ))}
             </div>
 
-            <div className={`flex gap-4 ${mounted ? 'c-fade-up' : 'opacity-0'}`} style={dl(770)}>
+            <div className={`c-contact-socials-row flex gap-4 ${mounted ? 'c-fade-up' : 'opacity-0'}`} style={dl(770)}>
               {[
                 { label: 'LinkedIn',  href: 'https://www.linkedin.com/in/kyle-payawal-612400377/', src: '/linkedin-alt.svg' },
                 { label: 'GitHub',    href: 'https://github.com/eishley15',                         src: '/github-alt.svg'   },
@@ -230,7 +283,7 @@ const Contact = () => {
             </div>
           </div>
 
-          <div className={`flex flex-col justify-center ${mounted ? 'c-slide-r' : 'opacity-0'}`} style={dl(200)}>
+          <div className={`c-contact-form-col flex flex-col justify-center ${mounted ? 'c-slide-r' : 'opacity-0'}`} style={dl(200)}>
             {submitted ? (
               <div className="c-success flex flex-col items-center justify-center text-center gap-6 py-20">
                 <div className="w-16 h-16 rounded-full border border-[#172995] flex items-center justify-center">
@@ -305,7 +358,7 @@ const Contact = () => {
                   <textarea id="message" name="message" rows={5} value={formData.message}
                     onChange={handleChange} onFocus={() => setFocused('message')} onBlur={() => setFocused(null)}
                     required placeholder="Tell me about your project..."
-                    className="c-input w-full bg-white/[0.03] border border-gray-800 rounded-lg px-4 pt-8 pb-3 text-[#FFFEEB] text-sm focus:outline-none focus:border-[#172995] transition-all duration-200 resize-none placeholder-transparent"
+                    className="c-input c-textarea-mobile w-full bg-white/[0.03] border border-gray-800 rounded-lg px-4 pt-8 pb-3 text-[#FFFEEB] text-sm focus:outline-none focus:border-[#172995] transition-all duration-200 resize-none placeholder-transparent"
                   />
                 </div>
 
@@ -317,7 +370,7 @@ const Contact = () => {
                 <div className={`flex items-center gap-4 mt-2 ${mounted ? 'c-fade-up' : 'opacity-0'}`} style={dl(620)}>
                   <div className="flex-1 h-px bg-gray-800" />
                   <button type="submit" disabled={sending}
-                    className="c-btn relative px-8 py-3 bg-[#172995] text-[#FFFEEB] rounded-lg text-sm font-semibold tracking-widest uppercase overflow-hidden transition-all duration-300 hover:bg-[#1f37b3] disabled:opacity-60">
+                    className="c-btn c-submit-btn relative px-8 py-3 bg-[#172995] text-[#FFFEEB] rounded-lg text-sm font-semibold tracking-widest uppercase overflow-hidden transition-all duration-300 hover:bg-[#1f37b3] disabled:opacity-60 inline-flex items-center gap-2">
                     <span className={`transition-opacity duration-200 ${sending ? 'opacity-0' : 'opacity-100'}`}>
                       <span className="inline-flex items-center gap-2">
                         SEND MESSAGE

@@ -35,6 +35,9 @@ const STYLES = `
     scroll-behavior: smooth;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    contain: layout style;
+    isolation: isolate;
   }
   .about-scroller::-webkit-scrollbar       { width: 3px; }
   .about-scroller::-webkit-scrollbar-track { background: transparent; }
@@ -44,6 +47,7 @@ const STYLES = `
     opacity: 0;
     transform: translateY(22px);
     transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1);
+    will-change: opacity, transform;
   }
   .sr.visible { opacity: 1 !important; transform: none !important; }
 
@@ -51,7 +55,18 @@ const STYLES = `
     0%,100% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; }
     50%      { border-radius: 30% 60% 70% 40%/50% 60% 30% 60%; }
   }
-  .blob { animation: blob 9s ease-in-out infinite; }
+  .blob { animation: blob 9s ease-in-out infinite; will-change: transform; }
+
+  @media (max-width: 768px) {
+    .blob { animation: none !important; }
+    .sr {
+      transition-duration: 0.4s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob, .sr, .divline, .gpulse { animation: none !important; transition-duration: 0.01ms !important; }
+  }
 
   .stat-card { transition: border-color .25s ease, transform .25s ease; }
   .stat-card:hover { border-color: rgba(23,41,149,.55); transform: translateY(-4px); }
@@ -68,6 +83,27 @@ const STYLES = `
 
   .gtile { transition: transform .3s ease, box-shadow .3s ease; }
   .gtile:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(23,41,149,.22); }
+
+  /* Bug 4 — Interests grid: uniform 2×2 on mobile */
+  .interests-main-grid {
+    grid-template-rows: 210px 210px;
+  }
+  @media (max-width: 768px) {
+    .interests-main-grid {
+      grid-template-rows: 160px 160px !important;
+    }
+    .interests-photo-card {
+      grid-row: span 1 !important;
+    }
+    /* Nested Design+Reading sub-grid stretches to fill the full bottom row */
+    .interests-nested-subgrid {
+      grid-column: span 2 !important;
+      height: 160px !important;
+    }
+    .interests-nested-subgrid > div {
+      height: 100% !important;
+    }
+  }
 
   .soc { transition: border-color .2s, opacity .2s; }
   .soc:hover { border-color: #172995 !important; opacity: 1 !important; }
@@ -90,6 +126,38 @@ const STYLES = `
   .lb-backdrop { animation: fadeIn 0.2s ease both; }
   .lb-img { animation: lbIn 0.25s cubic-bezier(0.22,1,0.36,1) both; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  /* content-visibility for below-fold sections */
+  .cv-section {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .about-profile-wrapper {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    border-radius: 1.25rem;
+  }
+  /* Mobile only: give the card a fixed height so absolute-positioned children
+     (the avatar image, shine, glare layers) don't collapse to zero */
+  @media (max-width: 768px) {
+    .about-profile-wrapper section {
+      height: 320px !important;
+      max-height: 360px !important;
+      aspect-ratio: unset !important;
+    }
+  }
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .about-profile-wrapper { max-width: 380px; width: 100%; flex-shrink: 0; }
+    .about-profile-wrapper section { max-height: 420px !important; }
+  }
+  @media (min-width: 1025px) {
+    .about-profile-wrapper { max-width: 460px; width: 100%; }
+    .about-profile-wrapper section { max-height: 560px !important; }
+  }
 `;
 
 const STATS = [
@@ -152,7 +220,7 @@ function useScrollReveal(ref: React.RefObject<HTMLDivElement | null>) {
           obs.unobserve(e.target);
         }
       }),
-      { root: el, threshold: 0.08 }
+      { root: el, threshold: 0.1 }
     );
     items.forEach((i: Element) => obs.observe(i));
     return () => obs.disconnect();
@@ -211,12 +279,13 @@ const About = () => {
   });
 
   useEffect(() => {
-    if (!document.getElementById('about-styles')) {
-      const s = document.createElement('style');
+    let s = document.getElementById('about-styles') as HTMLStyleElement | null;
+    if (!s) {
+      s = document.createElement('style');
       s.id = 'about-styles';
-      s.textContent = STYLES;
       document.head.appendChild(s);
     }
+    s.textContent = STYLES;
   }, []);
 
   return (
@@ -244,9 +313,9 @@ const About = () => {
       <div ref={scrollRef} className="about-scroller absolute inset-0 z-10 pt-20">
         <div className="max-w-5xl mx-auto px-6 sm:px-10 lg:px-14 pb-24">
           <section className="py-18 sm:py-20">
-            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-10 lg:gap-16">
+            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 lg:gap-16">
 
-              <div className="shrink-0 w-full max-w-[420px] lg:max-w-[460px] mx-auto lg:mx-0">
+              <div className="about-profile-wrapper shrink-0">
                 <ProfileCard
                   name=""
                   title="Fullstack Developer"
@@ -310,21 +379,21 @@ const About = () => {
               </button>
             </div>
           </section>
-          <section className="pb-16">
-            <div className="grid grid-cols-3 gap-4">
+          <section className="pb-16 cv-section">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
               {STATS.map((s, i) => (
                 <div key={s.label}
-                  className="stat-card sr text-center py-8 px-4 rounded-2xl bg-white/[0.025] border border-gray-800"
+                  className="stat-card sr text-center py-5 sm:py-8 px-2 sm:px-4 rounded-2xl bg-white/[0.025] border border-gray-800"
                   data-delay={i * 80}>
-                  <p className="text-[#172995] text-[2.5rem] font-black leading-none">{s.value}</p>
-                  <p className="text-gray-500 text-[10px] font-semibold tracking-[0.22em] uppercase mt-3">{s.label}</p>
+                  <p className="text-[#172995] text-2xl sm:text-[2.5rem] font-black leading-none">{s.value}</p>
+                  <p className="text-gray-500 text-[8px] sm:text-[10px] font-semibold tracking-[0.15em] sm:tracking-[0.22em] uppercase mt-2 sm:mt-3 leading-tight">{s.label}</p>
                 </div>
               ))}
             </div>
           </section>
 
           <Rule />
-          <section className="pb-20">
+          <section className="pb-20 cv-section">
             <SectionHead
               tag="< Skills >"
               title="What I Bring to the Table"
@@ -358,7 +427,7 @@ const About = () => {
           </section>
 
           <Rule />
-          <section className="pb-20">
+          <section className="pb-20 cv-section">
             <SectionHead
               tag="< Tools >"
               title="Tools"
@@ -372,7 +441,7 @@ const About = () => {
                   <div key={item.name}
                     className="stile sr aspect-square rounded-2xl border border-gray-800 bg-white/[0.025] flex flex-col items-center justify-center gap-2 p-3 cursor-default"
                     data-delay={i * 50}>
-                    <img src={item.image} alt={item.name} className="w-12 h-12 object-contain" />
+                    <img src={item.image} alt={item.name} className="w-12 h-12 object-contain" loading="lazy" decoding="async" />
                     <p className="text-gray-500 text-[9px] font-bold tracking-wider uppercase text-center leading-tight">{item.name}</p>
                   </div>
                 ))}
@@ -395,18 +464,18 @@ const About = () => {
           </section>
 
           <Rule />
-          <section className="pb-20">
+          <section className="pb-20 cv-section">
             <SectionHead
               tag="< Beyond Dev >"
               title="Life Outside the Code"
               sub="Photography, videography, sports, and adventures — the creative fuel behind every line of code."
             />
 
-            <div className="grid grid-cols-2 gap-3" style={{ gridTemplateRows: '210px 210px' }}>
+            <div className="interests-main-grid grid grid-cols-2 gap-3">
 
-              <div className="gtile sr row-span-2 rounded-2xl border border-gray-800/60 relative flex flex-col items-center justify-end pb-6 overflow-hidden"
+              <div className="interests-photo-card gtile sr row-span-2 rounded-2xl border border-gray-800/60 relative flex flex-col items-center justify-end pb-6 overflow-hidden"
                 data-delay="0">
-                <img src="/photography.webp" alt="Photography" className="absolute inset-0 w-full h-full object-cover" />
+                <img src="/photography.webp" alt="Photography" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                 <p className="text-[#FFFEEB] text-sm font-bold tracking-[0.15em] uppercase relative z-10">Photography</p>
                 <p className="text-gray-400 text-xs relative z-10">Freelance · Events · Products</p>
@@ -414,12 +483,12 @@ const About = () => {
 
               <div className="gtile sr rounded-2xl border border-gray-800/60 relative flex flex-col items-center justify-end pb-4 overflow-hidden"
                 data-delay="80">
-                <img src="/thumbnail.webp" alt="Video Editing" className="absolute inset-0 w-full h-full object-cover" />
+                <img src="/thumbnail.webp" alt="Video Editing" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                 <p className="text-[#FFFEEB] text-xs font-bold tracking-[0.15em] uppercase relative z-10">Video Editing</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="interests-nested-subgrid grid grid-cols-2 gap-3">
                 {[
                   { label: 'Design', image: '/design.webp' },
                   { label: 'Reading', image: '/reading.webp' },
@@ -427,7 +496,7 @@ const About = () => {
                   <div key={t.label}
                     className="gtile sr rounded-2xl border border-gray-800/60 relative flex flex-col items-center justify-end pb-3 overflow-hidden"
                     data-delay={160 + i * 80}>
-                    <img src={t.image} alt={t.label} className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={t.image} alt={t.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                     <p className="text-[#FFFEEB] text-[11px] font-bold tracking-[0.15em] uppercase relative z-10">{t.label}</p>
                   </div>
@@ -568,7 +637,7 @@ const About = () => {
           </section>
 
           <Rule />
-          <section className="pb-20">
+          <section className="pb-20 cv-section">
             <div className="sr gpulse relative rounded-2xl overflow-hidden border border-[#172995]/40" data-delay="0">
               <div className="absolute inset-0 bg-gradient-to-br from-[#060d2e] via-[#0d1a5e] to-[#060d2e]" />
               <div className="absolute inset-0 opacity-[0.06]"

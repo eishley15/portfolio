@@ -1,9 +1,29 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import DecryptedText from '@/components/DecryptedText';
 import TerminalCLI from '@/components/TerminalCLI';
 import { menuItems, socialItems } from '@/data/navigation';
 import { usePageMeta } from '@/hooks/usePageMeta';
+
+const HOME_MOBILE_STYLES = `
+  @media (max-width: 768px) {
+    .home-cta-wrap,
+    .home-social-wrap {
+      position: relative;
+      z-index: 20;
+      pointer-events: auto;
+    }
+    /* Force animated children visible on mobile — GSAP ScrollTrigger
+       doesn't fire reliably in overflow:hidden full-viewport containers */
+    .home-cta-wrap > *,
+    .home-social-wrap > * {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      filter: blur(0px) !important;
+    }
+  }
+`;
 
 const FaultyTerminal = lazy(() => import('../components/FaultyTerminal'));
 const StaggeredMenu = lazy(() => import('../components/StaggeredMenu'));
@@ -44,6 +64,15 @@ const SocialIcons = () => (
 );
 
 export default function Home() {
+  useEffect(() => {
+    if (!document.getElementById('home-mobile-styles')) {
+      const s = document.createElement('style');
+      s.id = 'home-mobile-styles';
+      s.textContent = HOME_MOBILE_STYLES;
+      document.head.appendChild(s);
+    }
+  }, []);
+
   usePageMeta({
     title: 'Kyle Payawal | Fullstack Developer',
     description: 'Fullstack Developer specializing in React, Node.js, and design-driven web experiences. Available for full-time and freelance work.',
@@ -78,7 +107,7 @@ export default function Home() {
         )}
       </div>
 
-      <div style={{ position: 'relative', zIndex: 30, pointerEvents: 'none' }}>
+      <div style={{ position: 'relative', zIndex: 40, pointerEvents: 'none' }}>
         <Suspense fallback={null}>
           <StaggeredMenu
             position="right"
@@ -103,9 +132,8 @@ export default function Home() {
                       p-4 sm:p-8 md:p-12 lg:p-16 xl:p-20
                       pb-8 sm:pb-12 md:pb-16 lg:pb-20">
         <div className="text-left mb-4 sm:mb-6 md:mb-8 max-w-full">
-          <h1 className="text-[2.5rem] sm:text-[3.5rem] md:text-[5rem] lg:text-[7rem] xl:text-[10rem] 
-                         text-[#FFFEEB] font-bold tracking-tight leading-none
-                         -mb-2 sm:-mb-3 md:-mb-4 lg:-mb-5">
+          <h1 className="text-[#FFFEEB] font-bold tracking-tight leading-none mb-1 sm:-mb-3 md:-mb-4 lg:-mb-5"
+              style={{ fontSize: 'clamp(1.75rem, 10vw, 10rem)' }}>
             <DecryptedText
               text="KYLE PAYAWAL"
               animateOn="view"
@@ -115,8 +143,8 @@ export default function Home() {
             />
           </h1>
 
-          <h2 className="text-[1.25rem] sm:text-[1.75rem] md:text-[2.5rem] lg:text-[3.5rem] xl:text-[5rem] 
-                         text-[#FFFEEB] font-normal mb-0 tracking-tight leading-tight">
+          <h2 className="text-[#FFFEEB] font-normal mb-0 tracking-tight leading-tight"
+              style={{ fontSize: 'clamp(1rem, 5.5vw, 5rem)' }}>
             <DecryptedText
               text="WHERE DESIGN MEETS CODE"
               animateOn="view"
@@ -131,29 +159,33 @@ export default function Home() {
             Fullstack Developer &middot; Open to Work
           </p>
 
-          <Suspense fallback={<CTAButton />}>
-            <AnimatedContent
-              distance={100}
-              direction="vertical"
-              reverse={false}
-              duration={0.8}
-              ease="power3.out"
-              initialOpacity={0}
-              animateOpacity
-              scale={1}
-              threshold={0.1}
-              delay={0}
-            >
-              <CTAButton />
-            </AnimatedContent>
-          </Suspense>
+          <div className="home-cta-wrap">
+            <Suspense fallback={<CTAButton />}>
+              <AnimatedContent
+                distance={100}
+                direction="vertical"
+                reverse={false}
+                duration={0.8}
+                ease="power3.out"
+                initialOpacity={0}
+                animateOpacity
+                scale={1}
+                threshold={0.1}
+                delay={0}
+              >
+                <CTAButton />
+              </AnimatedContent>
+            </Suspense>
+          </div>
         </div>
 
-        <Suspense fallback={<SocialIcons />}>
-          <FadeContent blur={true} duration={1000} initialOpacity={0}>
-            <SocialIcons />
-          </FadeContent>
-        </Suspense>
+        <div className="home-social-wrap">
+          <Suspense fallback={<SocialIcons />}>
+            <FadeContent blur={true} duration={1000} initialOpacity={0}>
+              <SocialIcons />
+            </FadeContent>
+          </Suspense>
+        </div>
       </div>
 
       <TerminalCLI />

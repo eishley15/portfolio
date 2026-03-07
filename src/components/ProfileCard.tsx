@@ -443,7 +443,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
     <div
       ref={wrapRef}
       className={`relative touch-none ${className}`.trim()}
-      style={{ perspective: '500px', transform: 'translate3d(0, 0, 0.1px)', ...cardStyle } as React.CSSProperties}
+      style={{ perspective: '500px', transform: 'translate3d(0, 0, 0.1px)', width: '100%', ...cardStyle } as React.CSSProperties}
     >
       {behindGlowEnabled && (
         <div
@@ -461,6 +461,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
           style={{
             height: '80svh',
             maxHeight: '620px',
+            maxWidth: '100%',
             aspectRatio: '0.8',
             borderRadius: cardRadius,
             backgroundBlendMode: 'color-dodge, normal, normal, normal',
@@ -511,16 +512,19 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
               }}
             >
               <img
-                className="w-full absolute left-1/2 bottom-[-1px] will-change-transform transition-transform duration-[120ms] ease-out"
+                className="absolute inset-0 w-full h-full will-change-transform transition-transform duration-[120ms] ease-out"
                 src={avatarUrl}
                 alt={`${name || 'User'} avatar`}
-                loading="lazy"
+                loading="eager"
+                decoding="async"
                 style={{
-                  transformOrigin: '50% 100%',
+                  transformOrigin: '50% 50%',
                   transform:
-                    'translateX(calc(-50% + (var(--pointer-from-left) - 0.5) * 6px)) translateZ(0) scaleY(calc(1 + (var(--pointer-from-top) - 0.5) * 0.02)) scaleX(calc(1 + (var(--pointer-from-left) - 0.5) * 0.01))',
+                    'translateZ(0) scaleY(calc(1 + (var(--pointer-from-top) - 0.5) * 0.02)) scaleX(calc(1 + (var(--pointer-from-left) - 0.5) * 0.01))',
                   borderRadius: cardRadius,
-                  backfaceVisibility: 'hidden'
+                  backfaceVisibility: 'hidden',
+                  objectFit: 'cover',
+                  objectPosition: 'center top'
                 }}
                 onError={e => {
                   const t = e.target as HTMLImageElement;

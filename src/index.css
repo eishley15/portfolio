@@ -223,6 +223,34 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ── Prevent horizontal scroll globally ── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  overscroll-behavior: none;
+}
+
+/* ── Box sizing for all elements ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ── Global image safety ── */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Disable heavy background animations on mobile ── */
+@media (max-width: 768px) {
+  .blob,
+  .noise-overlay,
+  .particle,
+  .animate-blob {
+    animation: none !important;
+  }
+}
+
 /* ── Respect prefers-reduced-motion for all animations ── */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -240,4 +268,18 @@ html {
   outline: 2px solid #172995;
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ── Prevent iOS auto-zoom on inputs (requires font-size >= 16px) ── */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+@media (min-width: 1025px) {
+  input,
+  textarea,
+  select {
+    font-size: 0.875rem;
+  }
 }

@@ -232,8 +232,8 @@ export default function TerminalCLI() {
     <>
       <button
         onClick={() => setIsOpen((o) => !o)}
-        className="fixed bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-2 rounded-lg
-                   bg-[#0a0a0a]/90 border border-[#172995]/60 text-[#7cfc00] text-xs
+        className="fixed bottom-6 right-6 z-[35] flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg
+                   bg-[#0a0a0a]/90 border border-[#172995]/60 text-[#7cfc00] text-[10px] sm:text-xs
                    font-mono tracking-widest uppercase backdrop-blur-sm
                    hover:border-[#172995] hover:shadow-[0_0_16px_rgba(23,41,149,0.5)]
                    transition-all duration-200 cursor-pointer"
@@ -244,17 +244,17 @@ export default function TerminalCLI() {
       </button>
 
       <div
-        className="fixed z-40 transition-all duration-300"
+        className="fixed z-[35] transition-all duration-300"
         style={fullscreen ? {
           inset: 0,
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none',
         } : {
           bottom: '4.5rem',
-          left: '1.5rem',
+          right: '1.5rem',
           opacity: isOpen ? 1 : 0,
           transform: isOpen ? 'scaleY(1) translateY(0)' : 'scaleY(0.85) translateY(12px)',
-          transformOrigin: 'bottom left',
+          transformOrigin: 'bottom right',
           pointerEvents: isOpen ? 'auto' : 'none',
         }}
       >
@@ -267,7 +267,7 @@ export default function TerminalCLI() {
             width: fullscreen ? '100%' : undefined,
             height: fullscreen ? '100%' : undefined,
             maxWidth: fullscreen ? undefined : 'calc(100vw - 3rem)',
-            minWidth: fullscreen ? undefined : '420px',
+            minWidth: fullscreen ? undefined : 'min(420px, calc(100vw - 3rem))',
           }}
         >
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#172995]/25 bg-[#0a0a0a]/50">
@@ -299,7 +299,7 @@ export default function TerminalCLI() {
           {!minimized && (
           <div
             className="overflow-y-auto p-4 font-mono text-[11px] leading-relaxed space-y-0.5 scrollbar-thin"
-            style={{ height: fullscreen ? 'calc(100% - 7rem)' : '16rem', scrollbarColor: 'rgba(23,41,149,0.4) transparent' }}
+            style={{ height: fullscreen ? 'calc(100% - 7rem)' : 'min(16rem, calc(60vh - 7rem))', scrollbarColor: 'rgba(23,41,149,0.4) transparent' }}
           >
             {lines.map((line, i) => (
               <p

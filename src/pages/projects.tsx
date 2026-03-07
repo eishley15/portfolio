@@ -16,6 +16,7 @@ const STYLES = `
     opacity: 0;
     transform: translateY(22px);
     transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1);
+    will-change: opacity, transform;
   }
   .sr.visible { opacity: 1 !important; transform: none !important; }
 
@@ -35,6 +36,20 @@ const STYLES = `
   /* Divider grow */
   @keyframes lineGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .divline { transform-origin: center; animation: lineGrow 1s cubic-bezier(.22,1,.36,1) both; }
+
+  /* Mobile: reduce animation complexity */
+  @media (max-width: 768px) {
+    .p-fade-up { animation-duration: 0.3s; }
+    .p-fade-in { animation-duration: 0.3s; }
+    .sr { transition-duration: 0.3s; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .p-fade-up, .p-fade-in, .sr, .divline {
+      animation: none !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 `;
 
 function useScrollReveal(containerRef: React.RefObject<HTMLDivElement | null>) {
@@ -62,6 +77,10 @@ const Projects = () => {
   const [activeProject, setActiveProject] = useState(0);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [mounted, setMounted] = useState(false);
+  const [lastTapped, setLastTapped] = useState<number | null>(null);
+  const [firstTap, setFirstTap] = useState(false);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   usePageMeta({
@@ -123,12 +142,29 @@ const Projects = () => {
 
   useScrollReveal(containerRef);
 
+  const handleCardTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleCardTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < -50) {
+      setActiveProject((p) => (p + 1) % projects.length);
+    } else if (dx > 50) {
+      setActiveProject((p) => (p - 1 + projects.length) % projects.length);
+    }
+  };
+
   const getCardDimensions = () => {
     const { width: w, height: h } = windowSize;
 
     if (w < 640) {
+      const mobileW = Math.min(300, Math.floor(w * 0.88));
       const mobileH = Math.min(300, Math.floor(h * 0.55));
-      return { width: 300, height: mobileH };
+      return { width: mobileW, height: mobileH };
     }
 
     if (h < 500) {
@@ -185,7 +221,7 @@ const Projects = () => {
     if (w < 640) {
       return {
         position: 'absolute' as const,
-        top: '200px',
+        top: 'calc(50vh + 162px)',
         left: '50%',
         transform: 'translateX(-50%)',
         bottom: 'auto'
@@ -232,9 +268,9 @@ const Projects = () => {
   const projectMenuItems = getProjectMenuItems();
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}>
+    <div ref={containerRef} style={{ width: '100%', minHeight: '100vh', height: '100vh', position: 'absolute', top: 0, left: 0, overflowX: 'hidden', overflowY: isMobile ? 'auto' : 'hidden', overscrollBehavior: 'none' }}>
 
-      <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
+      <div className="absolute inset-0 z-0 bg-[#0a0a0a] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0f23] to-[#0a0a0a]"></div>
 
         <div className="absolute top-0 -left-4 w-96 h-96 bg-[#172995] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -268,58 +304,257 @@ const Projects = () => {
         />
       </div>
 
-      <div
-        className="absolute left-0 right-0 z-20 text-center"
-        style={{ top: getTitleTop() }}
-      >
-        <div className="px-4 sm:px-6 md:px-8">
-          <p className={cls('p-fade-up text-[#172995] text-[9px] sm:text-[10px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase')} style={dl(0)}>
-            {'< Portfolio >'}
-          </p>
-          <h2 className={cls(`p-fade-up text-[#FFFEEB] ${getTitleSize()} font-black tracking-tight leading-tight mt-1.5 sm:mt-2`)} style={dl(60)}>
-            MY BEST WORK SO FAR
-          </h2>
-          {showSubtitle && (
-            <p className={cls('p-fade-up text-gray-500 text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2 max-w-xs sm:max-w-md md:max-w-lg mx-auto leading-relaxed')} style={dl(100)}>
-              {isMobile ? 'Tap menu items below' : 'Hover over the menu items to explore my featured projects'}
+      {/* ── MOBILE LAYOUT: stacked column, zero overlap ─────────────────── */}
+      {isMobile && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+            paddingTop: '72px',
+            paddingBottom: '0px',
+            position: 'relative',
+            zIndex: 10,
+          }}
+        >
+          {/* Title */}
+          <div style={{ padding: '12px 16px', textAlign: 'center', width: '100%' }}>
+            <p className={cls('p-fade-up text-[#172995] text-[9px] font-bold tracking-[0.25em] uppercase')} style={dl(0)}>
+              {'< Portfolio >'}
             </p>
+            <h2 className={cls(`p-fade-up text-[#FFFEEB] ${getTitleSize()} font-black tracking-tight leading-tight mt-1.5`)} style={dl(60)}>
+              MY BEST WORK SO FAR
+            </h2>
+            <div className={cls('divline mx-auto mt-2 h-px w-12 bg-gradient-to-r from-transparent via-[#172995] to-transparent')} style={dl(140)} />
+          </div>
+
+          {/* FlowingMenu — full width, relative, in document flow */}
+          <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '260px', flexShrink: 0 }}>
+            <FlowingMenu
+              items={projectMenuItems}
+              speed={6}
+              textColor="#fff"
+              bgColor="transparent"
+              marqueeBgColor="#172995"
+              marqueeTextColor="#FFFEEB"
+              borderColor="#333"
+              activeItem={activeProject}
+              onItemHover={() => {}}
+              onItemLeave={() => {}}
+              onItemClick={(index) => {
+                if (lastTapped === index) {
+                  openProjectModal(projects[index]);
+                  setLastTapped(null);
+                } else {
+                  setActiveProject(index);
+                  setLastTapped(index);
+                  if (!firstTap) setFirstTap(true);
+                }
+              }}
+            />
+          </div>
+
+          {/* Tap hint — fades out after first tap */}
+          <p
+            style={{
+              opacity: firstTap ? 0 : 0.5,
+              transition: 'opacity 0.5s ease',
+              fontSize: '0.7rem',
+              color: '#888',
+              marginTop: '8px',
+              fontFamily: 'monospace',
+              letterSpacing: '0.12em',
+              textAlign: 'center',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
+          >
+            Tap a project to preview →
+          </p>
+
+          {/* CardSwap — slides in via height + opacity transition on first tap */}
+          <div
+            style={{
+              width: '90vw',
+              maxWidth: '340px',
+              height: lastTapped !== null ? `${cardDims.height}px` : '0px',
+              overflow: 'visible',
+              opacity: lastTapped !== null ? 1 : 0,
+              pointerEvents: lastTapped !== null ? 'auto' : 'none',
+              transition: 'height 0.35s cubic-bezier(0.22,1,0.36,1), margin-top 0.35s ease, opacity 0.35s ease',
+              marginTop: lastTapped !== null ? '16px' : '0px',
+              position: 'relative',
+              zIndex: 1,
+            }}
+            onTouchStart={handleCardTouchStart}
+            onTouchEnd={handleCardTouchEnd}
+          >
+            <div style={{ width: `${cardDims.width}px`, height: `${cardDims.height}px`, perspective: '1900px', margin: '0 auto' }}>
+              <CardSwap
+                cardDistance={20}
+                verticalDistance={0}
+                delay={999999}
+                pauseOnHover={false}
+                activeCardIndex={activeProject}
+                width={cardDims.width}
+                height={cardDims.height}
+              >
+                {projects.map((project, idx) => (
+                  <Card key={idx} customClass="bg-gradient-to-br from-[#0a0a0a]/95 to-[#1a1a2e]/95 border-[#172995] backdrop-blur-md shadow-2xl cursor-pointer transition-all duration-500">
+                    <div
+                      onClick={() => openProjectModal(project)}
+                      className="group w-full h-full p-4 flex flex-col justify-between gap-2 transition-all duration-300 relative"
+                    >
+                      <div className="flex-shrink-0">
+                        <p className="text-[#172995] text-[9px] font-bold tracking-[0.25em] uppercase mb-1">
+                          Project {String(idx + 1).padStart(2, '0')}
+                        </p>
+                        <h3 className="text-[#FFFEEB] text-lg font-black tracking-tight mb-1.5 leading-tight">
+                          {project.name}
+                        </h3>
+                        <p className="text-gray-400 text-xs leading-relaxed line-clamp-2">
+                          {project.description}
+                        </p>
+                      </div>
+                      <div className="w-full flex-1 min-h-0 rounded-lg overflow-hidden border border-[#172995]/40 shadow-xl">
+                        <div className="bg-[#1a1a2e] px-2 py-1.5 flex items-center gap-1.5 border-b border-[#172995]/20">
+                          <div className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-[#ff5f57]" />
+                            <span className="w-2 h-2 rounded-full bg-[#febc2e]" />
+                            <span className="w-2 h-2 rounded-full bg-[#28c840]" />
+                          </div>
+                          <div className="ml-1 flex-1 bg-[#0a0a0a] rounded px-2 py-0.5 flex items-center">
+                            <span className="text-gray-500 text-[8px] truncate">{project.url}</span>
+                          </div>
+                        </div>
+                        <div className="w-full h-full bg-[#0a0a0a] relative overflow-hidden">
+                          <img
+                            src={project.image}
+                            alt={project.name}
+                            className="w-full h-full object-cover object-top"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/20 via-transparent to-transparent pointer-events-none" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-[#172995] text-[10px] font-mono tracking-widest uppercase">
+                          tap to view details →
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </CardSwap>
+            </div>
+          </div>
+
+          {/* Swipe dots — visible when card is showing */}
+          {lastTapped !== null && (
+            <div className="flex flex-col items-center gap-2 mt-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                <div className="flex gap-1.5">
+                  {projects.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveProject(i)}
+                      className="transition-all duration-300 rounded-full"
+                      style={{
+                        width: i === activeProject ? '20px' : '6px',
+                        height: '6px',
+                        background: i === activeProject ? '#172995' : 'rgba(255,255,255,0.2)',
+                      }}
+                      aria-label={`Project ${i + 1}`}
+                    />
+                  ))}
+                </div>
+                <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <p className="text-gray-600 text-[9px] font-mono tracking-widest uppercase">swipe to navigate</p>
+            </div>
           )}
-          <div className={cls('divline mx-auto mt-2 sm:mt-3 md:mt-4 h-px w-12 sm:w-14 md:w-16 bg-gradient-to-r from-transparent via-[#172995] to-transparent')} style={dl(140)} />
-        </div>
-      </div>
 
-      <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full ${getMenuHeight()} z-5`}>
-        <div className="w-full h-full">
-          <FlowingMenu
-            items={projectMenuItems}
-            speed={isMobile ? 6 : 10}
-            textColor="#fff"
-            bgColor="transparent"
-            marqueeBgColor="#172995"
-            marqueeTextColor="#FFFEEB"
-            borderColor="#333"
-            onItemHover={(index) => {
-              setActiveProject(index);
-            }}
-            onItemLeave={() => {
-              setActiveProject(0);
-            }}
-            onItemClick={(index) => {
-              openProjectModal(projects[index]);
-            }}
-          />
+          {/* Footer — in flow at bottom of mobile scrollable content */}
+          <div className="w-full px-3 mt-2">
+            <PortfolioFooter
+              className={cls('p-fade-in')}
+              style={dl(200)}
+              dataDelay={0}
+              linkClassName="opacity-35 hover:opacity-75 transition-opacity duration-200"
+              textClassName="text-[10px]"
+              showContactInfo={false}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      <div
-        className="transform z-10 px-4 sm:p-0"
-        style={getCardPosition()}
-      >
-        <div className={`transform ${getCardTransform()}`}>
-          <div className="relative" style={{ width: `${cardDims.width}px`, height: `${cardDims.height}px`, perspective: '1900px' }}>
-            <CardSwap
-              cardDistance={isMobile ? 20 : 40}
-              verticalDistance={isMobile ? 30 : 50}
+      {/* ── DESKTOP LAYOUT: absolute-positioned layers (unchanged) ──────── */}
+      {!isMobile && (
+        <div
+          className="absolute left-0 right-0 z-20 text-center"
+          style={{ top: getTitleTop() }}
+        >
+          <div className="px-4 sm:px-6 md:px-8">
+            <p className={cls('p-fade-up text-[#172995] text-[9px] sm:text-[10px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase')} style={dl(0)}>
+              {'< Portfolio >'}
+            </p>
+            <h2 className={cls(`p-fade-up text-[#FFFEEB] ${getTitleSize()} font-black tracking-tight leading-tight mt-1.5 sm:mt-2`)} style={dl(60)}>
+              MY BEST WORK SO FAR
+            </h2>
+            {showSubtitle && (
+              <p className={cls('p-fade-up text-gray-500 text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2 max-w-xs sm:max-w-md md:max-w-lg mx-auto leading-relaxed')} style={dl(100)}>
+                Hover over the menu items to explore my featured projects
+              </p>
+            )}
+            <div className={cls('divline mx-auto mt-2 sm:mt-3 md:mt-4 h-px w-12 sm:w-14 md:w-16 bg-gradient-to-r from-transparent via-[#172995] to-transparent')} style={dl(140)} />
+          </div>
+        </div>
+      )}
+
+      {!isMobile && (
+        <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full ${getMenuHeight()} z-[5]`}>
+          <div className="w-full h-full">
+            <FlowingMenu
+              items={projectMenuItems}
+              speed={10}
+              textColor="#fff"
+              bgColor="transparent"
+              marqueeBgColor="#172995"
+              marqueeTextColor="#FFFEEB"
+              borderColor="#333"
+              activeItem={activeProject}
+              onItemHover={(index) => {
+                setActiveProject(index);
+              }}
+              onItemLeave={() => {
+                setActiveProject(0);
+              }}
+              onItemClick={(index) => {
+                openProjectModal(projects[index]);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {!isMobile && (
+        <div
+          className="transform z-10 sm:p-0"
+          style={getCardPosition()}
+          onTouchStart={handleCardTouchStart}
+          onTouchEnd={handleCardTouchEnd}
+        >
+          <div className={`transform ${getCardTransform()}`}>
+            <div className="relative" style={{ width: `${cardDims.width}px`, height: `${cardDims.height}px`, perspective: '1900px' }}>
+              <CardSwap
+                cardDistance={40}
+                verticalDistance={50}
               delay={999999}
               pauseOnHover={true}
               activeCardIndex={activeProject}
@@ -386,18 +621,22 @@ const Projects = () => {
             </CardSwap>
           </div>
         </div>
-      </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-30 px-3 sm:px-6 md:px-8 pb-1.5 sm:pb-2">
-        <PortfolioFooter
-          className={cls('p-fade-in')}
-          style={dl(200)}
-          dataDelay={0}
-          linkClassName="opacity-35 hover:opacity-75 transition-opacity duration-200"
-          textClassName="text-[10px] sm:text-xs"
-          showContactInfo={!isMobile}
-        />
       </div>
+      )}
+
+      {!isMobile && (
+        <div className="absolute inset-x-0 bottom-0 z-30 px-3 sm:px-6 md:px-8 pb-1.5 sm:pb-2">
+          <PortfolioFooter
+            className={cls('p-fade-in')}
+            style={dl(200)}
+            dataDelay={0}
+            linkClassName="opacity-35 hover:opacity-75 transition-opacity duration-200"
+            textClassName="text-[10px] sm:text-xs"
+            showContactInfo={true}
+          />
+        </div>
+      )}
 
       {selectedProject && (
         <Suspense fallback={null}>
