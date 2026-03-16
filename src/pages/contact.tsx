@@ -120,6 +120,7 @@ const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending]     = useState(false);
   const [hasError, setHasError]   = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [mounted, setMounted]     = useState(false);
 
   usePageMeta({
@@ -144,26 +145,38 @@ const Contact = () => {
     e.preventDefault();
     if (!import.meta.env.VITE_WEB3FORMS_KEY) {
       setHasError(true);
+      setErrorMessage('Contact form is not configured. Missing Web3Forms key.');
       return;
     }
     setSending(true);
     setHasError(false);
+    setErrorMessage('');
     try {
-      const data = new FormData(e.currentTarget);
-      if (!formData.subject) data.set('subject', 'Portfolio Contact Form');
+      const data = new FormData();
+      data.append('access_key', import.meta.env.VITE_WEB3FORMS_KEY);
+      data.append('name', formData.name.trim());
+      data.append('email', formData.email.trim());
+      data.append('subject', formData.subject.trim() || 'Portfolio Contact Form');
+      data.append('message', formData.message.trim());
+      data.append('from_name', 'Portfolio Contact Form');
 
       const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
         body: data,
       });
       const json = await res.json();
-      if (json.success) {
+      if (res.ok && json.success) {
         setSubmitted(true);
       } else {
         setHasError(true);
+        setErrorMessage(json?.message || 'Submission failed. Please try again.');
       }
     } catch {
       setHasError(true);
+      setErrorMessage('Network error. Please try again in a moment.');
     } finally {
       setSending(false);
     }
@@ -308,9 +321,6 @@ const Contact = () => {
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
 
-                <input type="hidden" name="access_key" value={import.meta.env.VITE_WEB3FORMS_KEY ?? ''} />
-                <input type="text" name="botcheck" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" aria-hidden="true" />
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {([
                     { name: 'name' as const,  label: 'Name',  type: 'text',  placeholder: 'Javi Torres'      },
@@ -364,7 +374,7 @@ const Contact = () => {
 
                 {hasError && (
                   <p className="text-red-400 text-xs text-center -mb-2">
-                    Something went wrong. Please try again or email me directly at payawalkyle@gmail.com
+                    {errorMessage || 'Something went wrong. Please try again or email me directly at payawalkyle@gmail.com'}
                   </p>
                 )}
                 <div className={`flex items-center gap-4 mt-2 ${mounted ? 'c-fade-up' : 'opacity-0'}`} style={dl(620)}>
