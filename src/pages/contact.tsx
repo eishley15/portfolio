@@ -156,9 +156,13 @@ const Contact = () => {
       data.append('access_key', import.meta.env.VITE_WEB3FORMS_KEY);
       data.append('name', formData.name.trim());
       data.append('email', formData.email.trim());
+      data.append('replyto', formData.email.trim());
       data.append('subject', formData.subject.trim() || 'Portfolio Contact Form');
       data.append('message', formData.message.trim());
       data.append('from_name', 'Portfolio Contact Form');
+      data.append('botcheck', '');
+      data.append('source', 'payawalkyle.vercel.app contact form');
+      data.append('page_url', window.location.href);
 
       const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
@@ -172,7 +176,11 @@ const Contact = () => {
         setSubmitted(true);
       } else {
         setHasError(true);
-        setErrorMessage(json?.message || 'Submission failed. Please try again.');
+        if (typeof json?.message === 'string' && json.message.toLowerCase().includes('marked as spam')) {
+          setErrorMessage('Your message was flagged as spam. Please avoid all-caps or repeated characters and try again.');
+        } else {
+          setErrorMessage(json?.message || 'Submission failed. Please try again.');
+        }
       }
     } catch {
       setHasError(true);
