@@ -238,7 +238,6 @@ html, body {
 /* ── Global image safety ── */
 img {
   max-width: 100%;
-  height: auto;
 }
 
 /* ── Disable heavy background animations on mobile ── */
